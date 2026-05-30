@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>WC 2026 Sticker Album</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --card: #141929;
+    --card2: #1c2438;
+    --accent: #e8b84b;
+    --accent2: #c9a030;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3498db;
+    --text: #f0f0f0;
+    --muted: #8892a4;
+    --border: #2a3450;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  #app { max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; gap: 12px; padding: 16px; background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+  .header h2 { flex: 1; font-size: 1.1rem; font-weight: 700; }
+  .back-btn { background: none; border: none; color: var(--accent); font-size: 1.4rem; cursor: pointer; padding: 4px 8px; }
+  .user-badge { font-size: 0.75rem; color: var(--muted); }
+
+  /* BUTTONS */
+  .btn { display: block; width: 100%; padding: 16px; border-radius: var(--radius); border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity .2s; text-align: center; }
+  .btn:active { opacity: .75; }
+  .btn-primary { background: var(--accent); color: #111; }
+  .btn-secondary { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-green { background: var(--green); color: #111; }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-blue { background: var(--blue); color: #fff; }
+  .btn-sm { padding: 8px 14px; font-size: .85rem; width: auto; border-radius: 8px; }
+
+  /* MENU */
+  #home-screen { padding-top: 0; }
+  .home-hero { background: linear-gradient(135deg, #1a2540, #0d1525); padding: 28px 20px 20px; text-align: center; border-bottom: 1px solid var(--border); }
+  .home-hero .trophy { font-size: 3rem; }
+  .home-hero h1 { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin: 8px 0 4px; }
+  .home-hero p { font-size: .85rem; color: var(--muted); }
+  .menu-grid { display: flex; flex-direction: column; gap: 12px; padding: 20px 16px; }
+  .menu-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; align-items: center; gap: 16px; cursor: pointer; transition: background .2s; }
+  .menu-card:active { background: var(--card2); }
+  .menu-icon { font-size: 2rem; width: 48px; text-align: center; }
+  .menu-text h3 { font-size: 1rem; font-weight: 700; }
+  .menu-text p { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .pending-badge { background: var(--red); color: #fff; font-size: .7rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; margin-left: 8px; }
+
+  /* FORMS */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+  input, select { width: 100%; padding: 12px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .auth-card { background: var(--card); border-radius: var(--radius); padding: 24px; margin: 32px 16px; }
+  .auth-card h2 { text-align: center; margin-bottom: 20px; color: var(--accent); }
+  .auth-toggle { text-align: center; margin-top: 16px; font-size: .85rem; color: var(--muted); }
+  .auth-toggle span { color: var(--accent); cursor: pointer; font-weight: 600; }
+
+  /* STATUS CARD */
+  .status-card { background: var(--card); border-radius: var(--radius); padding: 20px; margin: 16px 0; text-align: center; border: 1px solid var(--border); }
+  .status-badge { display: inline-block; padding: 6px 16px; border-radius: 99px; font-weight: 700; font-size: .9rem; margin-bottom: 10px; }
+  .badge-missing { background: rgba(231,76,60,.2); color: var(--red); border: 1px solid var(--red); }
+  .badge-collected { background: rgba(46,204,113,.2); color: var(--green); border: 1px solid var(--green); }
+  .badge-doubles { background: rgba(232,184,75,.2); color: var(--accent); border: 1px solid var(--accent); }
+  .status-count { font-size: 2rem; font-weight: 800; margin: 8px 0; }
+  .status-label { font-size: .85rem; color: var(--muted); }
+
+  /* GRID SELECTORS */
+  .group-list { display: flex; flex-direction: column; gap: 8px; }
+  .group-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  .group-item:active { background: var(--card2); }
+  .group-label { font-size: .75rem; color: var(--muted); width: 60px; }
+  .country-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .country-btn { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 10px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 600; color: var(--text); transition: background .2s; }
+  .country-btn:active { background: var(--card2); }
+  .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .num-btn { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 0; text-align: center; cursor: pointer; font-size: .9rem; font-weight: 600; position: relative; transition: background .2s; }
+  .num-btn:active { background: var(--card2); }
+  .num-btn.missing { border-color: var(--red); color: var(--red); }
+  .num-btn.collected { border-color: var(--green); color: var(--green); }
+  .num-btn.doubles { border-color: var(--accent); color: var(--accent); }
+  .num-dot { position: absolute; top: 3px; right: 4px; font-size: .6rem; }
+
+  /* TRADE CARDS */
+  .user-trade-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; cursor: pointer; }
+  .user-trade-header { display: flex; justify-content: space-between; align-items: center; }
+  .user-trade-name { font-weight: 700; }
+  .trade-count { background: var(--accent); color: #111; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+  .trade-detail { margin-top: 12px; display: none; }
+  .trade-detail.open { display: block; }
+  .trade-col { margin-bottom: 12px; }
+  .trade-col h4 { font-size: .8rem; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+  .sticker-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: .75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+  .chip-give { background: rgba(231,76,60,.2); color: var(--red); border: 1px solid rgba(231,76,60,.4); }
+  .chip-get { background: rgba(46,204,113,.2); color: var(--green); border: 1px solid rgba(46,204,113,.4); }
+  .trade-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* LISTS */
+  .section-header { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; padding: 12px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 8px; }
+  .sticker-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .sticker-row:last-child { border-bottom: none; }
+  .sticker-info { font-size: .9rem; }
+  .sticker-info span { color: var(--muted); font-size: .8rem; margin-left: 6px; }
+  .counter { display: flex; align-items: center; gap: 10px; }
+  .counter-btn { background: var(--card2); border: 1px solid var(--border); color: var(--text); width: 30px; height: 30px; border-radius: 6px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .counter-val { font-weight: 700; width: 24px; text-align: center; }
+
+  /* TOGGLE */
+  .toggle-bar { display: flex; background: var(--card); border-radius: 10px; padding: 4px; margin-bottom: 16px; gap: 4px; }
+  .toggle-btn { flex: 1; padding: 8px; text-align: center; border-radius: 7px; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--muted); border: none; background: none; }
+  .toggle-btn.active { background: var(--accent); color: #111; }
+
+  /* THIRD PARTY TRADE */
+  .tp-sticker { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--card); border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border); cursor: pointer; transition: border-color .2s; }
+  .tp-sticker.selected-give { border-color: var(--red); background: rgba(231,76,60,.1); }
+  .tp-sticker.selected-get { border-color: var(--green); background: rgba(46,204,113,.1); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 12px 20px; border-radius: 99px; font-size: .9rem; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  /* PENDING TRADE BANNER */
+  .pending-banner { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.4); border-radius: var(--radius); padding: 14px 16px; margin: 12px 16px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+  .pending-banner p { font-size: .9rem; font-weight: 600; }
+  .pending-banner small { color: var(--muted); font-size: .75rem; }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .empty-state { text-align: center; color: var(--muted); padding: 40px 20px; font-size: .9rem; }
+  .logout-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: .8rem; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen active">
+    <div style="text-align:center;padding:40px 0 0;font-size:3rem">🏆</div>
+    <div class="auth-card">
+      <h2 id="auth-title">WC 2026 Stickers</h2>
+      <div id="auth-form">
+        <div class="form-group" id="username-group" style="display:none">
+          <label>Username</label>
+          <input type="text" id="auth-username" placeholder="Pick a username" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="auth-email" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-password" placeholder="Password">
+        </div>
+        <button class="btn btn-primary" onclick="submitAuth()">Sign In</button>
+        <div class="auth-toggle">
+          <span id="auth-switch-link" onclick="toggleAuthMode()">Don't have an account? Sign up</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div id="home-screen" class="screen">
+    <div class="home-hero">
+      <div class="trophy">🏆</div>
+      <h1>WC 2026 Stickers</h1>
+      <p class="user-badge">Logged in as <strong id="home-username"></strong></p>
+    </div>
+    <div id="pending-banners"></div>
+    <div class="menu-grid">
+      <div class="menu-card" onclick="showScreen('check-screen')">
+        <div class="menu-icon">🔍</div>
+        <div class="menu-text">
+          <h3>Check / Add Stickers</h3>
+          <p>Look up a sticker and add it to your collection</p>
+        </div>
+      </div>
+      <div class="menu-card" onclick="showScreen('trades-screen'); loadTrades()">
+        <div class="menu-icon">🔄</div>
+        <div class="menu-text">
+          <h3>Find Trades <span id="pending-count-badge"></span></h3>
+          <p>Match your doubles with other collectors</p>
+        </div>
+      </div>
+      <div class="menu-card" onclick="showScreen('lists-screen'); loadLists()">
+        <div class="menu-icon">📋</div>
+        <div class="menu-text">
+          <h3>Edit Lists</h3>
+          <p>View and edit your full sticker collection</p>
+        </div>
+      </div>
+      <div class="menu-card" onclick="logout()" style="opacity:.6">
+        <div class="menu-icon">🚪</div>
+        <div class="menu-text">
+          <h3>Sign Out</h3>
+          <p></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECK/ADD SCREEN -->
+  <div id="check-screen" class="screen">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
+      <h2>Check / Add Stickers</h2>
+    </div>
+    <div style="padding:16px">
+      <!-- Step 1: Group selection -->
+      <div id="check-step1">
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select a group or FWC</p>
+        <div class="group-list" id="check-group-list"></div>
+      </div>
+      <!-- Step 2: Country selection -->
+      <div id="check-step2" style="display:none">
+        <button class="btn btn-secondary btn-sm" onclick="checkBack(1)" style="margin-bottom:12px">‹ Back</button>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select a country</p>
+        <div class="country-grid" id="check-country-grid"></div>
+      </div>
+      <!-- Step 3: Sticker number -->
+      <div id="check-step3" style="display:none">
+        <button class="btn btn-secondary btn-sm" onclick="checkBack(2)" style="margin-bottom:12px">‹ Back</button>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select sticker number</p>
+        <div class="number-grid" id="check-number-grid"></div>
+      </div>
+      <!-- Step 4: Status + action -->
+      <div id="check-step4" style="display:none">
+        <button class="btn btn-secondary btn-sm" onclick="checkBack(3)" style="margin-bottom:12px">‹ Back</button>
+        <div class="status-card" id="check-status-card"></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-green" onclick="addSticker()">+ Add Sticker</button>
+          <button class="btn btn-secondary" onclick="checkBack(3)">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRADES SCREEN -->
+  <div id="trades-screen" class="screen">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
+      <h2>Find Trades</h2>
+    </div>
+    <div style="padding:16px">
+      <div id="trades-list"></div>
+      <div class="divider"></div>
+      <button class="btn btn-secondary" onclick="showScreen('tp-trade-screen'); loadTpTrade()">
+        🤝 Trade with someone outside the app
+      </button>
+    </div>
+  </div>
+
+  <!-- THIRD-PARTY TRADE SCREEN -->
+  <div id="tp-trade-screen" class="screen">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('trades-screen')">‹</button>
+      <h2>Third-Party Trade</h2>
+    </div>
+    <div style="padding:16px">
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Tap doubles you're giving away, then tap missing stickers you're receiving.</p>
+      <div class="toggle-bar">
+        <button class="toggle-btn active" id="tp-tab-give" onclick="tpSetTab('give')">My Doubles (giving)</button>
+        <button class="toggle-btn" id="tp-tab-get" onclick="tpSetTab('get')">My Missing (getting)</button>
+      </div>
+      <div id="tp-list"></div>
+      <div id="tp-summary" style="display:none;margin-top:12px">
+        <div class="divider"></div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Summary</p>
+        <div id="tp-summary-content"></div>
+        <button class="btn btn-green" style="margin-top:12px" onclick="executeTpTrade()">Confirm Trade</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTS / EDIT SCREEN -->
+  <div id="lists-screen" class="screen">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
+      <h2>Edit Lists</h2>
+    </div>
+    <div style="padding:16px">
+      <div class="toggle-bar">
+        <button class="toggle-btn active" id="list-tab-missing" onclick="listsSetTab('missing')">Missing</button>
+        <button class="toggle-btn" id="list-tab-doubles" onclick="listsSetTab('doubles')">Doubles</button>
+        <button class="toggle-btn" id="list-tab-all" onclick="listsSetTab('all')">All</button>
+      </div>
+      <div id="lists-content"></div>
+    </div>
+  </div>
+
+  <!-- PENDING TRADE REVIEW SCREEN -->
+  <div id="pending-trade-screen" class="screen">
+    <div class="header">
+      <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
+      <h2>Incoming Trade</h2>
+    </div>
+    <div style="padding:16px" id="pending-trade-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =============================================
+// CONFIG — replace with your Supabase details
+// =============================================
+const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'
+const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY'
+
+// =============================================
+// DATA
+// =============================================
+const GROUPS = [
+  { id: 'A', teams: [['MEX','🇲🇽','Mexico'],['ZAF','🇿🇦','South Africa'],['KOR','🇰🇷','South Korea'],['CZE','🇨🇿','Czechia']] },
+  { id: 'B', teams: [['CAN','🇨🇦','Canada'],['BIH','🇧🇦','Bosnia & Herz.'],['QAT','🇶🇦','Qatar'],['SUI','🇨🇭','Switzerland']] },
+  { id: 'C', teams: [['BRA','🇧🇷','Brazil'],['MAR','🇲🇦','Morocco'],['HAI','🇭🇹','Haiti'],['SCO','🏴󠁧󠁢󠁳󠁣󠁴󠁿','Scotland']] },
+  { id: 'D', teams: [['USA','🇺🇸','United States'],['PAR','🇵🇾','Paraguay'],['AUS','🇦🇺','Australia'],['TUR','🇹🇷','Türkiye']] },
+  { id: 'E', teams: [['GER','🇩🇪','Germany'],['CUW','🇨🇼','Curaçao'],['CIV','🇨🇮','Ivory Coast'],['ECU','🇪🇨','Ecuador']] },
+  { id: 'F', teams: [['NED','🇳🇱','Netherlands'],['JPN','🇯🇵','Japan'],['SWE','🇸🇪','Sweden'],['TUN','🇹🇳','Tunisia']] },
+  { id: 'G', teams: [['BEL','🇧🇪','Belgium'],['EGY','🇪🇬','Egypt'],['IRN','🇮🇷','Iran'],['NZL','🇳🇿','New Zealand']] },
+  { id: 'H', teams: [['ESP','🇪🇸','Spain'],['CPV','🇨🇻','Cape Verde'],['KSA','🇸🇦','Saudi Arabia'],['URU','🇺🇾','Uruguay']] },
+  { id: 'I', teams: [['FRA','🇫🇷','France'],['SEN','🇸🇳','Senegal'],['IRQ','🇮🇶','Iraq'],['NOR','🇳🇴','Norway']] },
+  { id: 'J', teams: [['ARG','🇦🇷','Argentina'],['ALG','🇩🇿','Algeria'],['AUT','🇦🇹','Austria'],['JOR','🇯🇴','Jordan']] },
+  { id: 'K', teams: [['POR','🇵🇹','Portugal'],['COD','🇨🇩','DR Congo'],['UZB','🇺🇿','Uzbekistan'],['COL','🇨🇴','Colombia']] },
+  { id: 'L', teams: [['ENG','🏴󠁧󠁢󠁥󠁮󠁧󠁿','England'],['CRO','🇭🇷','Croatia'],['GHA','🇬🇭','Ghana'],['PAN','🇵🇦','Panama']] },
+]
+const FWC_COUNT = 19
+const COUNTRY_COUNT = 20
+
+// Build flat team lookup
+const TEAM_MAP = {}
+GROUPS.forEach(g => g.teams.forEach(([code, flag, name]) => { TEAM_MAP[code] = { flag, name, group: g.id } }))
+
+// =============================================
+// STATE
+// =============================================
+let sb, currentUser, currentProfile, stickerCache = {}, authMode = 'signin'
+let checkState = { group: null, section: null, number: null }
+let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
+
+// =============================================
+// INIT
+// =============================================
+window.addEventListener('DOMContentLoaded', async () => {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  const { data: { session } } = await sb.auth.getSession()
+  if (session) await initUser(session.user)
+  else showScreen('auth-screen')
+})
+
+async function initUser(user) {
+  currentUser = user
+  const { data } = await sb.from('profiles').select('*').eq('id', user.id).single()
+  currentProfile = data
+  document.getElementById('home-username').textContent = data.username
+  await loadStickerCache()
+  await checkPendingTrades()
+  showScreen('home-screen')
+}
+
+// =============================================
+// AUTH
+// =============================================
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin'
+  const isSignup = authMode === 'signup'
+  document.getElementById('auth-title').textContent = isSignup ? 'Create Account' : 'WC 2026 Stickers'
+  document.getElementById('username-group').style.display = isSignup ? 'block' : 'none'
+  document.querySelector('#auth-form .btn-primary').textContent = isSignup ? 'Sign Up' : 'Sign In'
+  document.getElementById('auth-switch-link').textContent = isSignup ? 'Already have an account? Sign in' : "Don't have an account? Sign up"
+}
+
+async function submitAuth() {
+  const email = document.getElementById('auth-email').value.trim()
+  const password = document.getElementById('auth-password').value
+  if (!email || !password) return toast('Please fill in all fields')
+  if (authMode === 'signup') {
+    const username = document.getElementById('auth-username').value.trim()
+    if (!username) return toast('Please choose a username')
+    const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } })
+    if (error) return toast(error.message)
+    if (data.user) await initUser(data.user)
+  } else {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password })
+    if (error) return toast(error.message)
+    if (data.user) await initUser(data.user)
+  }
+}
+
+async function logout() {
+  await sb.auth.signOut()
+  currentUser = null; currentProfile = null; stickerCache = {}
+  showScreen('auth-screen')
+}
+
+// =============================================
+// STICKER CACHE
+// =============================================
+async function loadStickerCache() {
+  const { data } = await sb.from('stickers').select('*').eq('user_id', currentUser.id)
+  stickerCache = {}
+  data?.forEach(s => { stickerCache[`${s.section}-${s.sticker_number}`] = s.count })
+}
+
+function getCount(section, num) { return stickerCache[`${section}-${num}`] || 0 }
+
+async function setCount(section, num, count) {
+  const key = `${section}-${num}`
+  stickerCache[key] = count
+  await sb.from('stickers').upsert({
+    user_id: currentUser.id, section, sticker_number: num, count
+  }, { onConflict: 'user_id,section,sticker_number' })
+}
+
+function statusLabel(count) {
+  if (count === 0) return { label: 'Missing', cls: 'badge-missing' }
+  if (count === 1) return { label: 'Collected', cls: 'badge-collected' }
+  return { label: `Collected + ${count - 1} double${count > 2 ? 's' : ''}`, cls: 'badge-doubles' }
+}
+
+// =============================================
+// SCREEN NAV
+// =============================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+  window.scrollTo(0, 0)
+}
+
+// =============================================
+// CHECK / ADD STICKERS
+// =============================================
+function initCheckScreen() {
+  const gl = document.getElementById('check-group-list')
+  gl.innerHTML = ''
+  GROUPS.forEach(g => {
+    const flags = g.teams.map(t => t[1]).join(' ')
+    const div = document.createElement('div')
+    div.className = 'group-item'
+    div.innerHTML = `<span class="group-label">Group ${g.id}</span><span style="flex:1;font-size:.9rem;font-weight:600">${g.teams.map(t=>t[2]).join(', ')}</span>`
+    div.onclick = () => selectGroup(g.id)
+    gl.appendChild(div)
+  })
+  // FWC option
+  const fwc = document.createElement('div')
+  fwc.className = 'group-item'
+  fwc.innerHTML = `<span class="group-label">FWC</span><span style="flex:1;font-size:.9rem;font-weight:600">🌍 FIFA World Cup special stickers</span>`
+  fwc.onclick = () => selectSection('FWC', '🌍 FWC')
+  gl.appendChild(fwc)
+}
+
+function selectGroup(groupId) {
+  checkState.group = groupId
+  const g = GROUPS.find(x => x.id === groupId)
+  const grid = document.getElementById('check-country-grid')
+  grid.innerHTML = ''
+  g.teams.forEach(([code, flag, name]) => {
+    const btn = document.createElement('button')
+    btn.className = 'country-btn'
+    btn.innerHTML = `<span style="font-size:1.5rem">${flag}</span><span>${name}</span>`
+    btn.onclick = () => selectSection(code, `${flag} ${name}`)
+    grid.appendChild(btn)
+  })
+  document.getElementById('check-step1').style.display = 'none'
+  document.getElementById('check-step2').style.display = 'block'
+}
+
+async function selectSection(code, label) {
+  checkState.section = code
+  const maxNum = code === 'FWC' ? FWC_COUNT : COUNTRY_COUNT
+  const grid = document.getElementById('check-number-grid')
+  grid.innerHTML = ''
+  for (let n = 1; n <= maxNum; n++) {
+    const c = getCount(code, n)
+    const btn = document.createElement('div')
+    btn.className = `num-btn ${c === 0 ? 'missing' : c === 1 ? 'collected' : 'doubles'}`
+    btn.innerHTML = `${n}${c > 1 ? `<span class="num-dot">×${c-1}</span>` : ''}`
+    btn.onclick = () => selectNumber(n)
+    grid.appendChild(btn)
+  }
+  document.getElementById('check-step2').style.display = 'none'
+  document.getElementById('check-step3').style.display = 'block'
+}
+
+function selectNumber(num) {
+  checkState.number = num
+  const c = getCount(checkState.section, num)
+  const { label, cls } = statusLabel(c)
+  const sectionLabel = checkState.section === 'FWC' ? 'FWC' :
+    `${TEAM_MAP[checkState.section]?.flag} ${TEAM_MAP[checkState.section]?.name}`
+  document.getElementById('check-status-card').innerHTML = `
+    <div style="font-size:.85rem;color:var(--muted);margin-bottom:8px">${sectionLabel} — Sticker #${num}</div>
+    <span class="status-badge ${cls}">${label}</span>
+    <div class="status-count">${c}</div>
+    <div class="status-label">sticker${c !== 1 ? 's' : ''} in your collection</div>
+  `
+  document.getElementById('check-step3').style.display = 'none'
+  document.getElementById('check-step4').style.display = 'block'
+}
+
+async function addSticker() {
+  const { section, number } = checkState
+  const newCount = getCount(section, number) + 1
+  await setCount(section, number, newCount)
+  selectNumber(number) // refresh display
+  // refresh number grid in background
+  const maxNum = section === 'FWC' ? FWC_COUNT : COUNTRY_COUNT
+  const grid = document.getElementById('check-number-grid')
+  if (grid.children[number - 1]) {
+    const c = newCount
+    const btn = grid.children[number - 1]
+    btn.className = `num-btn ${c === 0 ? 'missing' : c === 1 ? 'collected' : 'doubles'}`
+    btn.innerHTML = `${number}${c > 1 ? `<span class="num-dot">×${c-1}</span>` : ''}`
+  }
+  toast(`Added! Now have ${newCount}`)
+}
+
+function checkBack(toStep) {
+  ['1','2','3','4'].forEach(n => document.getElementById(`check-step${n}`).style.display = 'none')
+  document.getElementById(`check-step${toStep}`).style.display = 'block'
+  if (toStep === 1) initCheckScreen()
+}
+
+// =============================================
+// TRADES
+// =============================================
+async function loadTrades() {
+  const el = document.getElementById('trades-list')
+  el.innerHTML = '<p style="color:var(--muted);font-size:.9rem">Loading...</p>'
+
+  // Load all other users' stickers
+  const { data: allProfiles } = await sb.from('profiles').select('*').neq('id', currentUser.id)
+  if (!allProfiles?.length) { el.innerHTML = '<div class="empty-state">No other users yet</div>'; return }
+
+  const { data: allStickers } = await sb.from('stickers').select('*').in('user_id', allProfiles.map(p => p.id))
+
+  // Build per-user sticker maps
+  const userMaps = {}
+  allStickers?.forEach(s => {
+    if (!userMaps[s.user_id]) userMaps[s.user_id] = {}
+    userMaps[s.user_id][`${s.section}-${s.sticker_number}`] = s.count
+  })
+
+  // My missing and doubles
+  const myMissing = [], myDoubles = []
+  getAllStickerKeys().forEach(k => {
+    const c = getCount(...k)
+    if (c === 0) myMissing.push(k)
+    if (c >= 2) myDoubles.push(k)
+  })
+
+  // Compute trades per user
+  const trades = allProfiles.map(profile => {
+    const theirMap = userMaps[profile.id] || {}
+    const getTheirCount = (sec, num) => theirMap[`${sec}-${num}`] || 0
+
+    const iGive = myDoubles.filter(([s,n]) => getTheirCount(s,n) === 0)  // I have doubles, they're missing
+    const iGet  = myMissing.filter(([s,n]) => getTheirCount(s,n) >= 2)    // I'm missing, they have doubles
+    return { profile, iGive, iGet, total: iGive.length + iGet.length }
+  }).filter(t => t.total > 0).sort((a, b) => b.total - a.total)
+
+  if (!trades.length) { el.innerHTML = '<div class="empty-state">No trades available with current users</div>'; return }
+
+  el.innerHTML = ''
+  trades.forEach(({ profile, iGive, iGet, total }) => {
+    const card = document.createElement('div')
+    card.className = 'user-trade-card'
+    card.innerHTML = `
+      <div class="user-trade-header">
+        <span class="user-trade-name">👤 ${profile.username}</span>
+        <span class="trade-count">${total} trade${total !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="trade-detail" id="trade-detail-${profile.id}">
+        <div class="trade-col">
+          <h4>You give → ${profile.username}</h4>
+          <div class="sticker-chips">${iGive.map(([s,n]) => chipHtml(s,n,'give')).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}</div>
+        </div>
+        <div class="trade-col">
+          <h4>${profile.username} gives → You</h4>
+          <div class="sticker-chips">${iGet.map(([s,n]) => chipHtml(s,n,'get')).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}</div>
+        </div>
+        <div class="trade-actions">
+          ${iGive.length && iGet.length ? `<button class="btn btn-green btn-sm" onclick="executeTrade('${profile.id}','${profile.username}',${JSON.stringify(iGive)},${JSON.stringify(iGet)})">Execute Trade</button>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="toggleTradeDetail('${profile.id}')">Close</button>
+        </div>
+      </div>
+    `
+    card.querySelector('.user-trade-header').onclick = () => toggleTradeDetail(profile.id)
+    el.appendChild(card)
+  })
+}
+
+function chipHtml(section, num, type) {
+  const label = section === 'FWC' ? `FWC-${num}` : `${TEAM_MAP[section]?.flag}${section}-${num}`
+  return `<span class="chip chip-${type}">${label}</span>`
+}
+
+function toggleTradeDetail(uid) {
+  const el = document.getElementById(`trade-detail-${uid}`)
+  el.classList.toggle('open')
+}
+
+async function executeTrade(recipientId, recipientName, iGive, iGet) {
+  if (!confirm(`Execute trade with ${recipientName}?\nYou give: ${iGive.length} sticker(s)\nYou receive: ${iGet.length} sticker(s)`)) return
+
+  // Update my stickers
+  for (const [s, n] of iGive) await setCount(s, n, getCount(s, n) - 1)
+  for (const [s, n] of iGet)  await setCount(s, n, getCount(s, n) + 1)
+
+  // Create pending trade for recipient
+  await sb.from('trades').insert({
+    initiator_id: currentUser.id,
+    recipient_id: recipientId,
+    initiator_gives: iGive.map(([section, sticker_number]) => ({ section, sticker_number })),
+    recipient_gives: iGet.map(([section, sticker_number]) => ({ section, sticker_number })),
+    status: 'pending'
+  })
+
+  toast('Trade recorded! Reloading...')
+  setTimeout(() => loadTrades(), 800)
+}
+
+// =============================================
+// THIRD-PARTY TRADE
+// =============================================
+function loadTpTrade() {
+  tpGive = []; tpGet = []; tpTab = 'give'
+  document.getElementById('tp-tab-give').classList.add('active')
+  document.getElementById('tp-tab-get').classList.remove('active')
+  renderTpList()
+  updateTpSummary()
+}
+
+function tpSetTab(tab) {
+  tpTab = tab
+  document.getElementById('tp-tab-give').classList.toggle('active', tab === 'give')
+  document.getElementById('tp-tab-get').classList.toggle('active', tab === 'get')
+  renderTpList()
+}
+
+function renderTpList() {
+  const el = document.getElementById('tp-list')
+  el.innerHTML = ''
+  const items = tpTab === 'give'
+    ? getAllStickerKeys().filter(([s,n]) => getCount(s,n) >= 2)
+    : getAllStickerKeys().filter(([s,n]) => getCount(s,n) === 0)
+
+  if (!items.length) { el.innerHTML = `<div class="empty-state">No ${tpTab === 'give' ? 'doubles' : 'missing stickers'}</div>`; return }
+
+  items.forEach(([s, n]) => {
+    const label = s === 'FWC' ? `FWC-${n}` : `${TEAM_MAP[s]?.flag} ${TEAM_MAP[s]?.name} #${n}`
+    const isSelected = tpTab === 'give'
+      ? tpGive.some(x => x[0]===s && x[1]===n)
+      : tpGet.some(x => x[0]===s && x[1]===n)
+    const div = document.createElement('div')
+    div.className = `tp-sticker${isSelected ? (tpTab==='give' ? ' selected-give' : ' selected-get') : ''}`
+    div.innerHTML = `<span style="font-size:.9rem">${label}</span><span style="font-size:.8rem;color:var(--muted)">${tpTab==='give'?`×${getCount(s,n)-1} doubles`:'missing'}</span>`
+    div.onclick = () => tpToggle(s, n)
+    el.appendChild(div)
+  })
+}
+
+function tpToggle(s, n) {
+  const arr = tpTab === 'give' ? tpGive : tpGet
+  const idx = arr.findIndex(x => x[0]===s && x[1]===n)
+  if (idx >= 0) arr.splice(idx, 1); else arr.push([s, n])
+  renderTpList()
+  updateTpSummary()
+}
+
+function updateTpSummary() {
+  const el = document.getElementById('tp-summary')
+  const content = document.getElementById('tp-summary-content')
+  if (!tpGive.length && !tpGet.length) { el.style.display = 'none'; return }
+  el.style.display = 'block'
+  content.innerHTML = `
+    ${tpGive.length ? `<p style="font-size:.85rem"><strong>Giving away (doubles removed):</strong><br>${tpGive.map(([s,n])=>chipHtml(s,n,'give')).join(' ')}</p>` : ''}
+    ${tpGet.length ? `<p style="font-size:.85rem;margin-top:8px"><strong>Receiving (added to collection):</strong><br>${tpGet.map(([s,n])=>chipHtml(s,n,'get')).join(' ')}</p>` : ''}
+  `
+}
+
+async function executeTpTrade() {
+  if (!confirm(`Confirm trade?\nGiving: ${tpGive.length} sticker(s)\nGetting: ${tpGet.length} sticker(s)`)) return
+  for (const [s, n] of tpGive) await setCount(s, n, getCount(s, n) - 1)
+  for (const [s, n] of tpGet)  await setCount(s, n, getCount(s, n) + 1)
+  toast('Trade complete!')
+  tpGive = []; tpGet = []
+  renderTpList()
+  updateTpSummary()
+}
+
+// =============================================
+// EDIT LISTS
+// =============================================
+async function loadLists() {
+  listsTab = 'missing'
+  document.getElementById('list-tab-missing').classList.add('active')
+  document.getElementById('list-tab-doubles').classList.remove('active')
+  document.getElementById('list-tab-all').classList.remove('active')
+  renderLists()
+}
+
+function listsSetTab(tab) {
+  listsTab = tab
+  document.getElementById('list-tab-missing').classList.toggle('active', tab==='missing')
+  document.getElementById('list-tab-doubles').classList.toggle('active', tab==='doubles')
+  document.getElementById('list-tab-all').classList.toggle('active', tab==='all')
+  renderLists()
+}
+
+function renderLists() {
+  const el = document.getElementById('lists-content')
+  el.innerHTML = ''
+
+  const sections = [
+    ...GROUPS.flatMap(g => g.teams.map(([code, flag, name]) => ({ code, flag, name, max: COUNTRY_COUNT }))),
+    { code: 'FWC', flag: '🌍', name: 'FWC', max: FWC_COUNT }
+  ]
+
+  let anyShown = false
+  sections.forEach(({ code, flag, name, max }) => {
+    const stickers = []
+    for (let n = 1; n <= max; n++) {
+      const c = getCount(code, n)
+      if (listsTab === 'missing' && c > 0) continue
+      if (listsTab === 'doubles' && c < 2) continue
+      stickers.push({ n, c })
+    }
+    if (!stickers.length) return
+    anyShown = true
+
+    const sec = document.createElement('div')
+    sec.innerHTML = `<div class="section-header">${flag} ${name}</div>`
+    stickers.forEach(({ n, c }) => {
+      const row = document.createElement('div')
+      row.className = 'sticker-row'
+      const { label, cls } = statusLabel(c)
+      row.innerHTML = `
+        <div class="sticker-info">${flag} ${name} #${n} <span class="${cls.replace('badge-','')}">${label}</span></div>
+        <div class="counter">
+          <button class="counter-btn" onclick="adjustCount('${code}',${n},-1,this)">−</button>
+          <span class="counter-val" id="cv-${code}-${n}">${c}</span>
+          <button class="counter-btn" onclick="adjustCount('${code}',${n},1,this)">+</button>
+        </div>
+      `
+      sec.appendChild(row)
+    })
+    el.appendChild(sec)
+  })
+
+  if (!anyShown) el.innerHTML = '<div class="empty-state">Nothing to show here</div>'
+}
+
+async function adjustCount(section, num, delta, btn) {
+  const cur = getCount(section, num)
+  const next = Math.max(0, cur + delta)
+  await setCount(section, num, next)
+  document.getElementById(`cv-${section}-${num}`).textContent = next
+  // If count changed from/to a tab-relevant threshold, re-render
+  if ((listsTab === 'missing' && (next === 0 || cur === 0)) ||
+      (listsTab === 'doubles' && (next < 2 || cur < 2))) {
+    renderLists()
+  }
+}
+
+// =============================================
+// PENDING TRADES
+// =============================================
+async function checkPendingTrades() {
+  const { data } = await sb.from('trades').select('*, initiator:profiles!initiator_id(username)')
+    .eq('recipient_id', currentUser.id).eq('status', 'pending')
+
+  const container = document.getElementById('pending-banners')
+  container.innerHTML = ''
+  const badge = document.getElementById('pending-count-badge')
+
+  if (!data?.length) { badge.innerHTML = ''; return }
+  badge.innerHTML = `<span class="pending-badge">${data.length}</span>`
+
+  data.forEach(trade => {
+    const banner = document.createElement('div')
+    banner.className = 'pending-banner'
+    banner.innerHTML = `
+      <div>
+        <p>🔄 Trade from ${trade.initiator.username}</p>
+        <small>Tap to review</small>
+      </div>
+      <span style="color:var(--accent)">›</span>
+    `
+    banner.onclick = () => showPendingTrade(trade)
+    container.appendChild(banner)
+  })
+}
+
+function showPendingTrade(trade) {
+  const el = document.getElementById('pending-trade-content')
+  const gives = trade.initiator_gives  // what initiator gives to me
+  const gets  = trade.recipient_gives  // what I give to initiator
+
+  el.innerHTML = `
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">
+      <strong>${trade.initiator?.username || 'Someone'}</strong> has proposed a trade:
+    </p>
+    <div class="trade-col">
+      <h4>You receive</h4>
+      <div class="sticker-chips">${gives.map(({section:s,sticker_number:n})=>chipHtml(s,n,'get')).join('')}</div>
+    </div>
+    <div class="trade-col" style="margin-top:12px">
+      <h4>You give</h4>
+      <div class="sticker-chips">${gets.map(({section:s,sticker_number:n})=>chipHtml(s,n,'give')).join('')}</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-green" onclick="respondTrade('${trade.id}','accepted',${JSON.stringify(gives)},${JSON.stringify(gets)})">Accept</button>
+      <button class="btn btn-red" onclick="respondTrade('${trade.id}','declined',[],[])">Decline</button>
+    </div>
+  `
+  showScreen('pending-trade-screen')
+}
+
+async function respondTrade(tradeId, status, iReceive, iGive) {
+  if (status === 'accepted') {
+    for (const {section: s, sticker_number: n} of iReceive) await setCount(s, n, getCount(s, n) + 1)
+    for (const {section: s, sticker_number: n} of iGive)    await setCount(s, n, Math.max(0, getCount(s, n) - 1))
+  }
+  await sb.from('trades').update({ status }).eq('id', tradeId)
+  toast(status === 'accepted' ? 'Trade accepted! Stickers updated.' : 'Trade declined.')
+  await checkPendingTrades()
+  showScreen('home-screen')
+}
+
+// =============================================
+// HELPERS
+// =============================================
+function getAllStickerKeys() {
+  const keys = []
+  GROUPS.forEach(g => g.teams.forEach(([code]) => {
+    for (let n = 1; n <= COUNTRY_COUNT; n++) keys.push([code, n])
+  }))
+  for (let n = 1; n <= FWC_COUNT; n++) keys.push(['FWC', n])
+  return keys
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast')
+  el.textContent = msg
+  el.classList.add('show')
+  setTimeout(() => el.classList.remove('show'), 2500)
+}
+
+// Init check screen on first load
+document.addEventListener('DOMContentLoaded', () => {
+  initCheckScreen()
+  // Intercept check screen nav
+  document.getElementById('check-screen').addEventListener('transitionend', () => {})
+})
+</script>
+</body>
+</html>
