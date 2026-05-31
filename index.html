@@ -369,7 +369,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Handle Google OAuth redirect — Supabase fires this after returning from Google
   sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session && !currentUser) {
+    if (event === 'SIGNED_IN' && session) {
       await initUser(session.user)
     }
   })
