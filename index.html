@@ -364,16 +364,28 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-  // If there's a hash fragment with an access_token, let Supabase process it first
-  if (window.location.hash && window.location.hash.includes('access_token')) {
-    // Supabase JS v2 automatically exchanges the hash for a session — just wait for it
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !currentUser) {
-        // Clean up the URL
-        history.replaceState(null, '', window.location.pathname)
-        await initUser(session.user)
+  const rawHash = window.location.hash
+  console.log('Hash on load:', rawHash.substring(0, 80))
+
+  if (rawHash && rawHash.includes('access_token')) {
+    const params = new URLSearchParams(rawHash.replace(/^#+/, ''))
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+    console.log('Tokens parsed — access:', !!access_token, 'refresh:', !!refresh_token)
+    if (access_token && refresh_token) {
+      history.replaceState(null, '', window.location.pathname)
+      const { data, error } = await sb.auth.setSession({ access_token, refresh_token })
+      console.log('setSession — user:', data?.user?.id, 'error:', error?.message)
+      if (data?.user) {
+        await initUser(data.user)
+      } else {
+        showScreen('auth-screen')
+        toast('Sign in failed — please try again')
       }
-    })
+    } else {
+      console.log('Token parse failed')
+      showScreen('auth-screen')
+    }
   } else {
     const { data: { session } } = await sb.auth.getSession()
     if (session) await initUser(session.user)
