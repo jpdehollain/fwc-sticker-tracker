@@ -363,16 +363,36 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 // =============================================
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  const { data: { session } } = await sb.auth.getSession()
-  if (session) await initUser(session.user)
-  else showScreen('auth-screen')
 
-  // Handle Google OAuth redirect — Supabase fires this after returning from Google
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session && !currentUser) {
-      await initUser(session.user)
+  const rawHash = window.location.hash
+
+  if (rawHash && rawHash.includes('access_token')) {
+    const params = new URLSearchParams(rawHash.replace(/^#+/, ''))
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
+    if (access_token && refresh_token) {
+      history.replaceState(null, '', window.location.pathname)
+      const { data, error } = await sb.auth.setSession({ access_token, refresh_token })
+      if (data?.user) {
+        await initUser(data.user)
+      } else {
+        showScreen('auth-screen')
+        toast('Sign in failed — please try again')
+      }
+    } else {
+      showScreen('auth-screen')
     }
-  })
+  } else {
+    const { data: { session } } = await sb.auth.getSession()
+    if (session) await initUser(session.user)
+    else showScreen('auth-screen')
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session && !currentUser) {
+        await initUser(session.user)
+      }
+    })
+  }
 })
 
 async function initUser(user) {
