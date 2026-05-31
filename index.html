@@ -368,35 +368,18 @@ window.addEventListener('DOMContentLoaded', async () => {
       detectSessionInUrl: true
     }
   })
-  const rawHash = window.location.hash
 
-  if (rawHash && rawHash.includes('access_token')) {
-    const params = new URLSearchParams(rawHash.replace(/^#+/, ''))
-    const access_token = params.get('access_token')
-    const refresh_token = params.get('refresh_token')
-    if (access_token && refresh_token) {
-      history.replaceState(null, '', window.location.pathname)
-      const { data, error } = await sb.auth.setSession({ access_token, refresh_token })
-      if (data?.user) {
-        await initUser(data.user)
-      } else {
-        showScreen('auth-screen')
-        toast('Sign in failed — please try again')
-      }
-    } else {
-      showScreen('auth-screen')
+  sb.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth event:', event, 'user:', session?.user?.id)
+    if (event === 'SIGNED_IN' && session && !currentUser) {
+      await initUser(session.user)
     }
-  } else {
-    const { data: { session } } = await sb.auth.getSession()
-    if (session) await initUser(session.user)
-    else showScreen('auth-screen')
+  })
 
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session && !currentUser) {
-        await initUser(session.user)
-      }
-    })
-  }
+  const { data: { session } } = await sb.auth.getSession()
+  console.log('Initial session:', session?.user?.id)
+  if (session) await initUser(session.user)
+  else showScreen('auth-screen')
 })
 
 async function initUser(user) {
