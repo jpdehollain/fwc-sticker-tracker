@@ -363,16 +363,28 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 // =============================================
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  const { data: { session } } = await sb.auth.getSession()
-  if (session) await initUser(session.user)
-  else showScreen('auth-screen')
 
-  // Handle Google OAuth redirect — Supabase fires this after returning from Google
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      await initUser(session.user)
-    }
-  })
+  // If there's a hash fragment with an access_token, let Supabase process it first
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    // Supabase JS v2 automatically exchanges the hash for a session — just wait for it
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session && !currentUser) {
+        // Clean up the URL
+        history.replaceState(null, '', window.location.pathname)
+        await initUser(session.user)
+      }
+    })
+  } else {
+    const { data: { session } } = await sb.auth.getSession()
+    if (session) await initUser(session.user)
+    else showScreen('auth-screen')
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session && !currentUser) {
+        await initUser(session.user)
+      }
+    })
+  }
 })
 
 async function initUser(user) {
