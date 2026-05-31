@@ -389,14 +389,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function initUser(user) {
   currentUser = user
-  // Retry profile fetch a few times — session token may not be attached on first attempt after OAuth redirect
-  let data = null
-  for (let i = 0; i < 5; i++) {
-    const { data: d, error } = await sb.from('profiles').select('*').eq('id', user.id).single()
-    if (d) { data = d; break }
-    await new Promise(r => setTimeout(r, 400))
-  }
-  if (!data) { showScreen('auth-screen'); toast('Sign in failed, please try again'); return }
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single()
+  if (!data) { showScreen('auth-screen'); toast('Sign in failed — please try again'); return }
   currentProfile = data
   document.getElementById('home-username').textContent = data.username
   await loadStickerCache()
