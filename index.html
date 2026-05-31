@@ -325,14 +325,14 @@
 // CONFIG — replace with your Supabase details
 // =============================================
 const SUPABASE_URL = 'https://dobsznpcrlarzcygvdbh.supabase.co'
-const SUPABASE_ANON_KEY = 'sb_publishable_gquvjA8nfob7KbUwKDGqFQ_kP72qgC-'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvYnN6bnBjcmxhcnpjeWd2ZGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMTk2NzgsImV4cCI6MjA5NTY5NTY3OH0.WK7cHzvhvrgU2klEIS8CdZblgPP0nL0C066wmu5aH90'
 
 // =============================================
 // DATA
 // =============================================
 const GROUPS = [
-  { id: 'A', teams: [['MEX','🇲🇽','Mexico'],['ZAF','🇿🇦','South Africa'],['KOR','🇰🇷','South Korea'],['CZE','🇨🇿','Czechia']] },
-  { id: 'B', teams: [['CAN','🇨🇦','Canada'],['BIH','🇧🇦','Bosnia & Herz.'],['QAT','🇶🇦','Qatar'],['SUI','🇨🇭','Switzerland']] },
+  { id: 'A', teams: [['MEX','🇲🇽','Mexico'],['RSA','🇿🇦','South Africa'],['KOR','🇰🇷','Korea Republic'],['CZE','🇨🇿','Czechia']] },
+  { id: 'B', teams: [['CAN','🇨🇦','Canada'],['BIH','🇧🇦','Bosnia-Herzegovina'],['QAT','🇶🇦','Qatar'],['SUI','🇨🇭','Switzerland']] },
   { id: 'C', teams: [['BRA','🇧🇷','Brazil'],['MAR','🇲🇦','Morocco'],['HAI','🇭🇹','Haiti'],['SCO','🏴󠁧󠁢󠁳󠁣󠁴󠁿','Scotland']] },
   { id: 'D', teams: [['USA','🇺🇸','United States'],['PAR','🇵🇾','Paraguay'],['AUS','🇦🇺','Australia'],['TUR','🇹🇷','Türkiye']] },
   { id: 'E', teams: [['GER','🇩🇪','Germany'],['CUW','🇨🇼','Curaçao'],['CIV','🇨🇮','Ivory Coast'],['ECU','🇪🇨','Ecuador']] },
@@ -363,46 +363,21 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 // =============================================
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  const { data: { session } } = await sb.auth.getSession()
+  if (session) await initUser(session.user)
+  else showScreen('auth-screen')
 
-  const rawHash = window.location.hash
-  console.log('Hash on load:', rawHash.substring(0, 80))
-
-  if (rawHash && rawHash.includes('access_token')) {
-    const params = new URLSearchParams(rawHash.replace(/^#+/, ''))
-    const access_token = params.get('access_token')
-    const refresh_token = params.get('refresh_token')
-    console.log('Tokens parsed — access:', !!access_token, 'refresh:', !!refresh_token)
-    if (access_token && refresh_token) {
-      history.replaceState(null, '', window.location.pathname)
-      const { data, error } = await sb.auth.setSession({ access_token, refresh_token })
-      console.log('setSession — user:', data?.user?.id, 'error:', error?.message)
-      if (data?.user) {
-        await initUser(data.user)
-      } else {
-        showScreen('auth-screen')
-        toast('Sign in failed — please try again')
-      }
-    } else {
-      console.log('Token parse failed')
-      showScreen('auth-screen')
+  // Handle Google OAuth redirect — Supabase fires this after returning from Google
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session && !currentUser) {
+      await initUser(session.user)
     }
-  } else {
-    const { data: { session } } = await sb.auth.getSession()
-    if (session) await initUser(session.user)
-    else showScreen('auth-screen')
-
-    sb.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session && !currentUser) {
-        await initUser(session.user)
-      }
-    })
-  }
+  })
 })
 
 async function initUser(user) {
   currentUser = user
-  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single()
-  if (!data) { showScreen('auth-screen'); toast('Sign in failed — please try again'); return }
+  const { data } = await sb.from('profiles').select('*').eq('id', user.id).single()
   currentProfile = data
   document.getElementById('home-username').textContent = data.username
   await loadStickerCache()
