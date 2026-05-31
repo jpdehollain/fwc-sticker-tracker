@@ -384,7 +384,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 async function initUser(user) {
   currentUser = user
-  const { data } = await sb.from('profiles').select('*').eq('id', user.id).single()
+  const { data: { session } } = await sb.auth.getSession()
+  console.log('Session at fetch time:', session?.access_token?.substring(0, 30) ?? 'NULL')
+  const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single()
+  console.log('Profile result — data:', !!data, 'error:', error?.message, error?.code)
+  if (!data) { showScreen('auth-screen'); toast('Sign in failed — please try again'); return }
   currentProfile = data
   document.getElementById('home-username').textContent = data.username
   await loadStickerCache()
