@@ -86,9 +86,28 @@ CREATE POLICY "Participants can update trade status"
 
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  base_username TEXT;
+  final_username TEXT;
+  suffix INT := 0;
 BEGIN
+  -- Use explicit username (email signup), or fall back to Google display name, then email prefix
+  base_username := COALESCE(
+    NULLIF(TRIM(NEW.raw_user_meta_data->>'username'), ''),
+    NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''),
+    NULLIF(TRIM(NEW.raw_user_meta_data->>'name'), ''),
+    SPLIT_PART(NEW.email, '@', 1)
+  );
+  -- Sanitise: lowercase, replace spaces/special chars with underscores
+  base_username := LOWER(REGEXP_REPLACE(base_username, '[^a-zA-Z0-9]', '_', 'g'));
+  -- Ensure uniqueness by appending a number if needed
+  final_username := base_username;
+  WHILE EXISTS (SELECT 1 FROM profiles WHERE username = final_username) LOOP
+    suffix := suffix + 1;
+    final_username := base_username || suffix::TEXT;
+  END LOOP;
   INSERT INTO profiles (id, username)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'username');
+  VALUES (NEW.id, final_username);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -324,7 +324,7 @@
 // =============================================
 // CONFIG — replace with your Supabase details
 // =============================================
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co'
+const SUPABASE_URL = 'https://dobsznpcrlarzcygvdbh.supabase.co'
 const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY'
 
 // =============================================
@@ -366,6 +366,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await sb.auth.getSession()
   if (session) await initUser(session.user)
   else showScreen('auth-screen')
+
+  // Handle Google OAuth redirect — Supabase fires this after returning from Google
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session && !currentUser) {
+      await initUser(session.user)
+    }
+  })
 })
 
 async function initUser(user) {
