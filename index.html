@@ -362,8 +362,12 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 // INIT
 // =============================================
 window.addEventListener('DOMContentLoaded', async () => {
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: false,
+      detectSessionInUrl: true
+    }
+  })
   const rawHash = window.location.hash
 
   if (rawHash && rawHash.includes('access_token')) {
