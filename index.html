@@ -465,20 +465,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   sb.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth event:', event, 'user:', session?.user?.id)
-    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session && !currentUser) {
-      await initUser(session.user)
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+      await initUser(session)
+    } else if (event === 'SIGNED_OUT') {
+      showScreen('auth-screen')
     }
   })
-
-  const { data: { session } } = await sb.auth.getSession()
-  console.log('Initial session:', session?.user?.id)
-  if (session) await initUser(session.user)
-  else showScreen('auth-screen')
 })
 
-async function initUser(user) {
-  currentUser = user
-  const { data: { session } } = await sb.auth.getSession()
+async function initUser(session) {
+  currentUser = session.user
   console.log('Session at fetch time:', session?.access_token?.substring(0, 30) ?? 'NULL')
   const { data, error } = await sb.from('profiles').select('*').eq('id', user.id).single()
   console.log('Profile result — data:', !!data, 'error:', error?.message, error?.code)
@@ -511,11 +507,11 @@ async function submitAuth() {
     if (!username) return toast('Please choose a username')
     const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } })
     if (error) return toast(error.message)
-    if (data.user) await initUser(data.user)
+    if (data.session) await initUser(data.session)
   } else {
     const { data, error } = await sb.auth.signInWithPassword({ email, password })
     if (error) return toast(error.message)
-    if (data.user) await initUser(data.user)
+    if (data.session) await initUser(data.session)
   }
 }
 
