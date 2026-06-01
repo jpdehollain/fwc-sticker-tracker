@@ -465,7 +465,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   sb.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth event:', event, 'user:', session?.user?.id)
-    if (event === 'SIGNED_IN' && session && !currentUser) {
+    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session && !currentUser) {
       await initUser(session.user)
     }
   })
