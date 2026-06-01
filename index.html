@@ -458,7 +458,7 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 window.addEventListener('DOMContentLoaded', async () => {
   sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-      persistSession: false,
+      persistSession: true,
       detectSessionInUrl: true
     }
   })
