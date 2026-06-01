@@ -81,6 +81,15 @@ CREATE POLICY IF NOT EXISTS "Participants can update trade status"
   USING (auth.uid() = initiator_id OR auth.uid() = recipient_id);
 
 -- =============================================
+-- Permissions
+-- =============================================
+
+GRANT USAGE ON SCHEMA public TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.stickers TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.trades TO authenticated;
+
+-- =============================================
 -- Auto-create profile on signup
 -- Explicit public schema reference and search_path
 -- required for auth trigger context

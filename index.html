@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>WC 2026 Sticker Album</title>
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<title>FWC Sticker Album Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <style>
   :root {
@@ -47,7 +51,6 @@
   /* MENU */
   #home-screen { padding-top: 0; }
   .home-hero { background: linear-gradient(135deg, #1a2540, #0d1525); padding: 28px 20px 20px; text-align: center; border-bottom: 1px solid var(--border); }
-  .home-hero .trophy { font-size: 3rem; }
   .home-hero h1 { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin: 8px 0 4px; }
   .home-hero p { font-size: .85rem; color: var(--muted); }
   .menu-grid { display: flex; flex-direction: column; gap: 12px; padding: 20px 16px; }
@@ -136,7 +139,59 @@
   .pending-banner { background: rgba(231,76,60,.15); border: 1px solid rgba(231,76,60,.4); border-radius: var(--radius); padding: 14px 16px; margin: 12px 16px 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
   .pending-banner p { font-size: .9rem; font-weight: 600; }
   .pending-banner small { color: var(--muted); font-size: .75rem; }
-
+  
+  /* OVERLAY */
+  .overlay-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 100; display: flex; align-items: center; justify-content: center; }
+  .overlay-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 24px; text-align: center; min-width: 220px; }
+  .overlay-title { font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+  .overlay-sticker { font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; }
+  .overlay-count { font-size: 3rem; font-weight: 800; margin: 8px 0; }
+  .overlay-btns { display: flex; gap: 16px; justify-content: center; margin-top: 16px; }
+  .overlay-btn { width: 56px; height: 56px; border-radius: 50%; border: none; font-size: 1.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .overlay-btn-minus { background: rgba(231,76,60,.2); color: var(--red); border: 1px solid var(--red); }
+  .overlay-btn-plus { background: rgba(46,204,113,.2); color: var(--green); border: 1px solid var(--green); }
+  .overlay-status { font-size: .85rem; margin-top: 12px; }
+  
+  /* COUNTRY LIST */
+  .search-bar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search-bar input { flex: 1; }
+  .filter-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 0 14px; color: var(--text); font-size: 1.1rem; cursor: pointer; }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); }
+  .country-list-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .country-list-item:active { background: var(--card2); }
+  .country-flag { font-size: 1.6rem; width: 32px; text-align: center; }
+  .country-info { flex: 1; }
+  .country-name { font-size: .95rem; font-weight: 700; }
+  .country-group { font-size: .72rem; color: var(--muted); }
+  .country-progress { text-align: right; }
+  .country-progress-num { font-size: .85rem; font-weight: 700; }
+  .country-progress-bar { width: 48px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 3px; overflow: hidden; }
+  .country-progress-fill { height: 100%; background: var(--green); border-radius: 2px; }
+  /* FILTER SHEET */
+  
+  .filter-sheet { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; justify-content: flex-end; }
+  .filter-sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+  .filter-sheet-content { position: relative; background: var(--card); border-radius: var(--radius) var(--radius) 0 0; padding: 20px 16px 40px; max-height: 70vh; overflow-y: auto; }
+  .filter-sheet-content h3 { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
+  .filter-group-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .filter-group-btn { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 6px; text-align: center; cursor: pointer; font-size: .85rem; font-weight: 600; transition: all .2s; }
+  .filter-group-btn.active { background: var(--accent); color: #111; border-color: var(--accent); }
+  /* STICKER NUMBER PAGE */
+  
+  .sticker-page-header { text-align: center; padding: 12px 0 16px; }
+  .sticker-page-flag { font-size: 2.5rem; }
+  .sticker-page-name { font-size: 1.1rem; font-weight: 800; margin-top: 4px; }
+  .sticker-page-progress { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .sticker-nav { display: flex; justify-content: space-between; margin-top: 16px; gap: 8px; }
+  /* SHOW LISTS */
+  
+  .lists-country-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .lists-country-label { font-size: .75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .lists-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip-missing { background: rgba(231,76,60,.15); color: var(--red); border: 1px solid rgba(231,76,60,.3); }
+  .chip-collected { background: rgba(46,204,113,.15); color: var(--green); border: 1px solid rgba(46,204,113,.3); }
+  .chip-doubles { background: rgba(232,184,75,.15); color: var(--accent); border: 1px solid rgba(232,184,75,.3); }
+  
   .divider { height: 1px; background: var(--border); margin: 16px 0; }
   .empty-state { text-align: center; color: var(--muted); padding: 40px 20px; font-size: .9rem; }
   .logout-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: .8rem; cursor: pointer; }
@@ -146,9 +201,9 @@
 <div id="app">
   <!-- AUTH SCREEN -->
   <div id="auth-screen" class="screen active">
-    <div style="text-align:center;padding:40px 0 0;font-size:3rem">🏆</div>
+    <img src="android-chrome-512x512.png" alt="Sticker pack" style="width:80px;height:80px;border-radius:16px;object-fit:cover">
     <div class="auth-card">
-      <h2 id="auth-title">WC 2026 Stickers</h2>
+      <h2 id="auth-title">FIFA World Cup Sticker Album Tracker</h2>
       <div id="auth-form">
         <div class="form-group" id="username-group" style="display:none">
           <label>Username</label>
@@ -182,17 +237,17 @@
   <!-- HOME SCREEN -->
   <div id="home-screen" class="screen">
     <div class="home-hero">
-      <div class="trophy">🏆</div>
-      <h1>WC 2026 Stickers</h1>
+      <img src="android-chrome-512x512.png" alt="Sticker pack" style="width:160px;height:160px;border-radius:16px;object-fit:cover">
+      <h1>FIFA World Cup Sticker Album Tracker</h1>
       <p class="user-badge">Logged in as <strong id="home-username"></strong></p>
     </div>
     <div id="pending-banners"></div>
     <div class="menu-grid">
-      <div class="menu-card" onclick="showScreen('check-screen')">
-        <div class="menu-icon">🔍</div>
+      <div class="menu-card" onclick="showScreen('check-screen'); initCheckScreen()">
+        <div class="menu-icon">⭐</div>
         <div class="menu-text">
-          <h3>Check / Add Stickers</h3>
-          <p>Look up a sticker and add it to your collection</p>
+          <h3>My Sticker List</h3>
+          <p>Browse and update your sticker collection</p>
         </div>
       </div>
       <div class="menu-card" onclick="showScreen('trades-screen'); loadTrades()">
@@ -205,8 +260,8 @@
       <div class="menu-card" onclick="showScreen('lists-screen'); loadLists()">
         <div class="menu-icon">📋</div>
         <div class="menu-text">
-          <h3>Edit Lists</h3>
-          <p>View and edit your full sticker collection</p>
+          <h3>Show Lists</h3>
+          <p>View and share your missing and doubles lists</p>
         </div>
       </div>
       <div class="menu-card" onclick="logout()" style="opacity:.6">
@@ -219,38 +274,56 @@
     </div>
   </div>
 
-  <!-- CHECK/ADD SCREEN -->
+  <!-- MY STICKER LIST SCREEN -->
   <div id="check-screen" class="screen">
     <div class="header">
       <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
-      <h2>Check / Add Stickers</h2>
+      <h2>My Sticker List</h2>
     </div>
     <div style="padding:16px">
-      <!-- Step 1: Group selection -->
       <div id="check-step1">
-        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select a group or FWC</p>
-        <div class="group-list" id="check-group-list"></div>
-      </div>
-      <!-- Step 2: Country selection -->
-      <div id="check-step2" style="display:none">
-        <button class="btn btn-secondary btn-sm" onclick="checkBack(1)" style="margin-bottom:12px">‹ Back</button>
-        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select a country</p>
-        <div class="country-grid" id="check-country-grid"></div>
-      </div>
-      <!-- Step 3: Sticker number -->
-      <div id="check-step3" style="display:none">
-        <button class="btn btn-secondary btn-sm" onclick="checkBack(2)" style="margin-bottom:12px">‹ Back</button>
-        <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px">Select sticker number</p>
-        <div class="number-grid" id="check-number-grid"></div>
-      </div>
-      <!-- Step 4: Status + action -->
-      <div id="check-step4" style="display:none">
-        <button class="btn btn-secondary btn-sm" onclick="checkBack(3)" style="margin-bottom:12px">‹ Back</button>
-        <div class="status-card" id="check-status-card"></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <button class="btn btn-green" onclick="addSticker()">+ Add Sticker</button>
-          <button class="btn btn-secondary" onclick="checkBack(3)">Cancel</button>
+        <div class="search-bar">
+          <input type="text" id="country-search" placeholder="Search country..." oninput="renderCountryList()">
+          <button class="filter-btn" id="filter-btn" onclick="toggleFilterSheet()">⚙︎</button>
         </div>
+        <div id="check-country-list"></div>
+      </div>
+      <div id="check-step2" style="display:none">
+        <div class="sticker-page-header">
+          <div class="sticker-page-flag" id="sticker-page-flag"></div>
+          <div class="sticker-page-name" id="sticker-page-name"></div>
+          <div class="sticker-page-progress" id="sticker-page-progress"></div>
+        </div>
+        <div class="number-grid" id="check-number-grid"></div>
+        <div class="sticker-nav">
+          <button class="btn btn-secondary btn-sm" onclick="navigateCountry(-1)">‹ Prev</button>
+          <button class="btn btn-secondary btn-sm" onclick="showScreen2Back()">↑ Countries</button>
+          <button class="btn btn-secondary btn-sm" onclick="navigateCountry(1)">Next ›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER SHEET -->
+  <div id="filter-sheet" class="filter-sheet" style="display:none" onclick="closeFilterSheet(event)">
+    <div class="filter-sheet-backdrop"></div>
+    <div class="filter-sheet-content" onclick="event.stopPropagation()">
+      <h3>Filter by Group</h3>
+      <div class="filter-group-grid" id="filter-group-grid"></div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="closeFilterSheet()">Apply</button>
+    </div>
+  </div>
+
+  <!-- STICKER OVERLAY -->
+  <div id="sticker-overlay" class="overlay-backdrop" style="display:none" onclick="closeOverlay()">
+    <div class="overlay-card" onclick="event.stopPropagation()">
+      <div class="overlay-title" id="overlay-title"></div>
+      <div class="overlay-sticker" id="overlay-sticker"></div>
+      <div class="overlay-count" id="overlay-count"></div>
+      <div class="overlay-status" id="overlay-status"></div>
+      <div class="overlay-btns">
+        <button class="overlay-btn overlay-btn-minus" onclick="overlayAdjust(-1)">−</button>
+        <button class="overlay-btn overlay-btn-plus" onclick="overlayAdjust(1)">+</button>
       </div>
     </div>
   </div>
@@ -292,11 +365,11 @@
     </div>
   </div>
 
-  <!-- LISTS / EDIT SCREEN -->
+  <!-- LISTS / SHOW SCREEN -->
   <div id="lists-screen" class="screen">
     <div class="header">
       <button class="back-btn" onclick="showScreen('home-screen')">‹</button>
-      <h2>Edit Lists</h2>
+      <h2>Show Lists</h2>
     </div>
     <div style="padding:16px">
       <div class="toggle-bar">
@@ -355,7 +428,6 @@ GROUPS.forEach(g => g.teams.forEach(([code, flag, name]) => { TEAM_MAP[code] = {
 // STATE
 // =============================================
 let sb, currentUser, currentProfile, stickerCache = {}, authMode = 'signin'
-let checkState = { group: null, section: null, number: null }
 let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 
 // =============================================
@@ -474,97 +546,162 @@ function showScreen(id) {
 }
 
 // =============================================
-// CHECK / ADD STICKERS
+// CHECK / MY STICKER LIST
 // =============================================
-function initCheckScreen() {
-  const gl = document.getElementById('check-group-list')
-  gl.innerHTML = ''
-  GROUPS.forEach(g => {
-    const flags = g.teams.map(t => t[1]).join(' ')
-    const div = document.createElement('div')
-    div.className = 'group-item'
-    div.innerHTML = `<span class="group-label">Group ${g.id}</span><span style="flex:1;font-size:.9rem;font-weight:600">${g.teams.map(t=>t[2]).join(', ')}</span>`
-    div.onclick = () => selectGroup(g.id)
-    gl.appendChild(div)
-  })
-  // FWC option
-  const fwc = document.createElement('div')
-  fwc.className = 'group-item'
-  fwc.innerHTML = `<span class="group-label">FWC</span><span style="flex:1;font-size:.9rem;font-weight:600">🌍 FIFA World Cup special stickers</span>`
-  fwc.onclick = () => selectSection('FWC', '🌍 FWC')
-  gl.appendChild(fwc)
+let activeGroups = new Set([...GROUPS.map(g => g.id), 'FWC'])
+let allSections = []
+let currentSectionIdx = 0
+let overlaySection = null, overlayNum = null
+
+function buildSectionList() {
+  allSections = []
+  GROUPS.forEach(g => g.teams.forEach(([code, flag, name]) => allSections.push({ code, flag, name, max: COUNTRY_COUNT, group: g.id })))
+  allSections.push({ code: 'FWC', flag: '🌍', name: 'FWC', max: FWC_COUNT, group: 'FWC' })
 }
 
-function selectGroup(groupId) {
-  checkState.group = groupId
-  const g = GROUPS.find(x => x.id === groupId)
-  const grid = document.getElementById('check-country-grid')
+function initCheckScreen() {
+  buildSectionList()
+  const grid = document.getElementById('filter-group-grid')
   grid.innerHTML = ''
-  g.teams.forEach(([code, flag, name]) => {
-    const btn = document.createElement('button')
-    btn.className = 'country-btn'
-    btn.innerHTML = `<span style="font-size:1.5rem">${flag}</span><span>${name}</span>`
-    btn.onclick = () => selectSection(code, `${flag} ${name}`)
+  GROUPS.forEach(g => {
+    const btn = document.createElement('div')
+    btn.className = `filter-group-btn${activeGroups.has(g.id) ? ' active' : ''}`
+    btn.textContent = `Group ${g.id}`
+    btn.onclick = () => { btn.classList.toggle('active'); activeGroups.has(g.id) ? activeGroups.delete(g.id) : activeGroups.add(g.id); updateFilterBtn() }
     grid.appendChild(btn)
   })
+  const fwcBtn = document.createElement('div')
+  fwcBtn.className = `filter-group-btn${activeGroups.has('FWC') ? ' active' : ''}`
+  fwcBtn.textContent = 'FWC'
+  fwcBtn.onclick = () => { fwcBtn.classList.toggle('active'); activeGroups.has('FWC') ? activeGroups.delete('FWC') : activeGroups.add('FWC'); updateFilterBtn() }
+  grid.appendChild(fwcBtn)
+  document.getElementById('check-step1').style.display = 'block'
+  document.getElementById('check-step2').style.display = 'none'
+  document.getElementById('country-search').value = ''
+  renderCountryList()
+}
+
+function updateFilterBtn() {
+  const allOn = activeGroups.size === GROUPS.length + 1
+  document.getElementById('filter-btn').classList.toggle('active', !allOn)
+}
+
+function renderCountryList() {
+  const search = document.getElementById('country-search').value.toLowerCase()
+  const el = document.getElementById('check-country-list')
+  el.innerHTML = ''
+  let lastGroup = null
+  allSections.forEach((sec, idx) => {
+    if (!activeGroups.has(sec.group)) return
+    if (search && !sec.name.toLowerCase().includes(search) && !sec.code.toLowerCase().includes(search)) return
+    if (sec.group !== lastGroup) {
+      lastGroup = sec.group
+      const hdr = document.createElement('div')
+      hdr.style.cssText = 'font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:10px 0 4px;font-weight:700'
+      hdr.textContent = sec.group === 'FWC' ? 'FWC Special' : `Group ${sec.group}`
+      el.appendChild(hdr)
+    }
+    let collected = 0
+    for (let n = 1; n <= sec.max; n++) { if (getCount(sec.code, n) >= 1) collected++ }
+    const pct = Math.round((collected / sec.max) * 100)
+    const item = document.createElement('div')
+    item.className = 'country-list-item'
+    item.innerHTML = `
+      <div class="country-flag">${sec.flag}</div>
+      <div class="country-info">
+        <div class="country-name">${sec.name}</div>
+        <div class="country-group">${sec.group === 'FWC' ? 'Special stickers' : `Group ${sec.group}`}</div>
+      </div>
+      <div class="country-progress">
+        <div class="country-progress-num" style="color:${collected===sec.max?'var(--green)':'var(--text)'}">${collected}/${sec.max}</div>
+        <div class="country-progress-bar"><div class="country-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    `
+    item.onclick = () => openStickerGrid(idx)
+    el.appendChild(item)
+  })
+  if (!el.children.length) el.innerHTML = '<div class="empty-state">No countries match</div>'
+}
+
+function openStickerGrid(idx) {
+  currentSectionIdx = idx
+  renderStickerGrid()
   document.getElementById('check-step1').style.display = 'none'
   document.getElementById('check-step2').style.display = 'block'
 }
 
-async function selectSection(code, label) {
-  checkState.section = code
-  const maxNum = code === 'FWC' ? FWC_COUNT : COUNTRY_COUNT
+function renderStickerGrid() {
+  const sec = allSections[currentSectionIdx]
+  document.getElementById('sticker-page-flag').textContent = sec.flag
+  document.getElementById('sticker-page-name').textContent = sec.name
+  let collected = 0
+  for (let n = 1; n <= sec.max; n++) { if (getCount(sec.code, n) >= 1) collected++ }
+  document.getElementById('sticker-page-progress').textContent = `${collected} / ${sec.max} collected`
   const grid = document.getElementById('check-number-grid')
   grid.innerHTML = ''
-  for (let n = 1; n <= maxNum; n++) {
-    const c = getCount(code, n)
+  for (let n = 1; n <= sec.max; n++) {
+    const c = getCount(sec.code, n)
     const btn = document.createElement('div')
     btn.className = `num-btn ${c === 0 ? 'missing' : c === 1 ? 'collected' : 'doubles'}`
+    btn.id = `nb-${sec.code}-${n}`
     btn.innerHTML = `${n}${c > 1 ? `<span class="num-dot">×${c-1}</span>` : ''}`
-    btn.onclick = () => selectNumber(n)
+    btn.onclick = () => openOverlay(sec.code, n)
     grid.appendChild(btn)
   }
+}
+
+function navigateCountry(dir) {
+  const total = allSections.length
+  currentSectionIdx = (currentSectionIdx + dir + total) % total
+  renderStickerGrid()
+  window.scrollTo(0, 0)
+}
+
+function showScreen2Back() {
   document.getElementById('check-step2').style.display = 'none'
-  document.getElementById('check-step3').style.display = 'block'
+  document.getElementById('check-step1').style.display = 'block'
+  renderCountryList()
 }
 
-function selectNumber(num) {
-  checkState.number = num
-  const c = getCount(checkState.section, num)
+function toggleFilterSheet() { document.getElementById('filter-sheet').style.display = 'flex' }
+function closeFilterSheet() { document.getElementById('filter-sheet').style.display = 'none'; renderCountryList() }
+
+function openOverlay(section, num) {
+  overlaySection = section; overlayNum = num
+  updateOverlayDisplay()
+  document.getElementById('sticker-overlay').style.display = 'flex'
+}
+
+function updateOverlayDisplay() {
+  const sec = allSections.find(s => s.code === overlaySection)
+  const c = getCount(overlaySection, overlayNum)
   const { label, cls } = statusLabel(c)
-  const sectionLabel = checkState.section === 'FWC' ? 'FWC' :
-    `${TEAM_MAP[checkState.section]?.flag} ${TEAM_MAP[checkState.section]?.name}`
-  document.getElementById('check-status-card').innerHTML = `
-    <div style="font-size:.85rem;color:var(--muted);margin-bottom:8px">${sectionLabel} — Sticker #${num}</div>
-    <span class="status-badge ${cls}">${label}</span>
-    <div class="status-count">${c}</div>
-    <div class="status-label">sticker${c !== 1 ? 's' : ''} in your collection</div>
-  `
-  document.getElementById('check-step3').style.display = 'none'
-  document.getElementById('check-step4').style.display = 'block'
+  document.getElementById('overlay-title').textContent = `${sec.flag} ${sec.name}`
+  document.getElementById('overlay-sticker').textContent = `${overlaySection}-${overlayNum}`
+  document.getElementById('overlay-count').textContent = c
+  document.getElementById('overlay-count').style.color = c === 0 ? 'var(--red)' : c === 1 ? 'var(--green)' : 'var(--accent)'
+  document.getElementById('overlay-status').innerHTML = `<span class="status-badge ${cls}">${label}</span>`
 }
 
-async function addSticker() {
-  const { section, number } = checkState
-  const newCount = getCount(section, number) + 1
-  await setCount(section, number, newCount)
-  selectNumber(number) // refresh display
-  // refresh number grid in background
-  const maxNum = section === 'FWC' ? FWC_COUNT : COUNTRY_COUNT
-  const grid = document.getElementById('check-number-grid')
-  if (grid.children[number - 1]) {
-    const c = newCount
-    const btn = grid.children[number - 1]
-    btn.className = `num-btn ${c === 0 ? 'missing' : c === 1 ? 'collected' : 'doubles'}`
-    btn.innerHTML = `${number}${c > 1 ? `<span class="num-dot">×${c-1}</span>` : ''}`
+async function overlayAdjust(delta) {
+  const cur = getCount(overlaySection, overlayNum)
+  const next = Math.max(0, cur + delta)
+  await setCount(overlaySection, overlayNum, next)
+  updateOverlayDisplay()
+  const btn = document.getElementById(`nb-${overlaySection}-${overlayNum}`)
+  if (btn) {
+    btn.className = `num-btn ${next === 0 ? 'missing' : next === 1 ? 'collected' : 'doubles'}`
+    btn.innerHTML = `${overlayNum}${next > 1 ? `<span class="num-dot">×${next-1}</span>` : ''}`
   }
-  toast(`Added! Now have ${newCount}`)
+  const sec = allSections[currentSectionIdx]
+  let collected = 0
+  for (let n = 1; n <= sec.max; n++) { if (getCount(sec.code, n) >= 1) collected++ }
+  document.getElementById('sticker-page-progress').textContent = `${collected} / ${sec.max} collected`
 }
 
-function checkBack(toStep) {
-  ['1','2','3','4'].forEach(n => document.getElementById(`check-step${n}`).style.display = 'none')
-  document.getElementById(`check-step${toStep}`).style.display = 'block'
-  if (toStep === 1) initCheckScreen()
+function closeOverlay() {
+  document.getElementById('sticker-overlay').style.display = 'none'
+  overlaySection = null; overlayNum = null
 }
 
 // =============================================
@@ -736,7 +873,7 @@ async function executeTpTrade() {
 }
 
 // =============================================
-// EDIT LISTS
+// SHOW LISTS
 // =============================================
 async function loadLists() {
   listsTab = 'missing'
@@ -757,12 +894,10 @@ function listsSetTab(tab) {
 function renderLists() {
   const el = document.getElementById('lists-content')
   el.innerHTML = ''
-
   const sections = [
     ...GROUPS.flatMap(g => g.teams.map(([code, flag, name]) => ({ code, flag, name, max: COUNTRY_COUNT }))),
     { code: 'FWC', flag: '🌍', name: 'FWC', max: FWC_COUNT }
   ]
-
   let anyShown = false
   sections.forEach(({ code, flag, name, max }) => {
     const stickers = []
@@ -774,39 +909,19 @@ function renderLists() {
     }
     if (!stickers.length) return
     anyShown = true
-
-    const sec = document.createElement('div')
-    sec.innerHTML = `<div class="section-header">${flag} ${name}</div>`
+    const row = document.createElement('div')
+    row.className = 'lists-country-row'
+    row.innerHTML = `<div class="lists-country-label">${flag} ${name}</div><div class="lists-chips" id="chips-${code}"></div>`
+    el.appendChild(row)
+    const chipsEl = row.querySelector(`#chips-${code}`)
     stickers.forEach(({ n, c }) => {
-      const row = document.createElement('div')
-      row.className = 'sticker-row'
-      const { label, cls } = statusLabel(c)
-      row.innerHTML = `
-        <div class="sticker-info">${flag} ${name} #${n} <span class="${cls.replace('badge-','')}">${label}</span></div>
-        <div class="counter">
-          <button class="counter-btn" onclick="adjustCount('${code}',${n},-1,this)">−</button>
-          <span class="counter-val" id="cv-${code}-${n}">${c}</span>
-          <button class="counter-btn" onclick="adjustCount('${code}',${n},1,this)">+</button>
-        </div>
-      `
-      sec.appendChild(row)
+      const chip = document.createElement('span')
+      chip.className = `chip ${listsTab === 'all' ? (c === 0 ? 'chip-missing' : c === 1 ? 'chip-collected' : 'chip-doubles') : listsTab === 'missing' ? 'chip-missing' : 'chip-doubles'}`
+      chip.textContent = `${code}-${n}`
+      chipsEl.appendChild(chip)
     })
-    el.appendChild(sec)
   })
-
   if (!anyShown) el.innerHTML = '<div class="empty-state">Nothing to show here</div>'
-}
-
-async function adjustCount(section, num, delta, btn) {
-  const cur = getCount(section, num)
-  const next = Math.max(0, cur + delta)
-  await setCount(section, num, next)
-  document.getElementById(`cv-${section}-${num}`).textContent = next
-  // If count changed from/to a tab-relevant threshold, re-render
-  if ((listsTab === 'missing' && (next === 0 || cur === 0)) ||
-      (listsTab === 'doubles' && (next < 2 || cur < 2))) {
-    renderLists()
-  }
 }
 
 // =============================================
@@ -895,9 +1010,7 @@ function toast(msg) {
 
 // Init check screen on first load
 document.addEventListener('DOMContentLoaded', () => {
-  initCheckScreen()
-  // Intercept check screen nav
-  document.getElementById('check-screen').addEventListener('transitionend', () => {})
+  buildSectionList()
 })
 </script>
 </body>

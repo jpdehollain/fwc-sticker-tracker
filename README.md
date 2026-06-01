@@ -4,7 +4,7 @@ A mobile-friendly web app to track your World Cup 2026 sticker collection, find 
 
 ## Stack
 - **Frontend:** Vanilla HTML/CSS/JS — hosted on GitHub Pages
-- **Backend:** Supabase (Postgres database + Auth + REST API)
+- **Backend:** Supabase (Postgres database + Auth + REST API) + Google Cloud Console (OAuth)
 
 ---
 
