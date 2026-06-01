@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="manifest" href="site.webmanifest">
 <title>FWC Sticker Album Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
 <style>
@@ -25,8 +25,30 @@
     --radius: 14px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-  #app { max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
+
+  /* BACKGROUND */
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('android-chrome-512x512.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.04;
+    z-index: 0;
+    pointer-events: none;
+  }
+  #app {
+    position: relative;
+    z-index: 1;
+  }
 
   /* SCREENS */
   .screen { display: none; padding: 16px; }
@@ -66,7 +88,7 @@
   label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
   input, select { width: 100%; padding: 12px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1rem; }
   input:focus, select:focus { outline: none; border-color: var(--accent); }
-  .auth-card { background: var(--card); border-radius: var(--radius); padding: 24px; margin: 32px 16px; }
+  .auth-card { background: var(--card); border-radius: var(--radius); padding: 24px; text-align: center; margin: 32px 16px; }
   .auth-card h2 { text-align: center; margin-bottom: 20px; color: var(--accent); }
   .auth-toggle { text-align: center; margin-top: 16px; font-size: .85rem; color: var(--muted); }
   .auth-toggle span { color: var(--accent); cursor: pointer; font-weight: 600; }
@@ -201,8 +223,8 @@
 <div id="app">
   <!-- AUTH SCREEN -->
   <div id="auth-screen" class="screen active">
-    <img src="android-chrome-512x512.png" alt="Sticker pack" style="width:80px;height:80px;border-radius:16px;object-fit:cover">
     <div class="auth-card">
+      <img src="android-chrome-512x512.png" alt="Sticker pack" style="width:80px;height:80px;border-radius:16px;object-fit:cover">
       <h2 id="auth-title">FIFA World Cup Sticker Album Tracker</h2>
       <div id="auth-form">
         <div class="form-group" id="username-group" style="display:none">
