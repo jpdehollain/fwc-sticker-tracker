@@ -331,6 +331,7 @@
     <div class="filter-sheet-backdrop"></div>
     <div class="filter-sheet-content" onclick="event.stopPropagation()">
       <h3>Filter by Group</h3>
+      <button class="btn btn-secondary btn-sm" id="filter-all-btn" onclick="toggleAllGroups()" style="margin-bottom:12px">Clear All</button>
       <div class="filter-group-grid" id="filter-group-grid"></div>
       <button class="btn btn-primary" style="margin-top:16px" onclick="closeFilterSheet()">Apply</button>
     </div>
@@ -607,6 +608,24 @@ function initCheckScreen() {
 function updateFilterBtn() {
   const allOn = activeGroups.size === GROUPS.length + 1
   document.getElementById('filter-btn').classList.toggle('active', !allOn)
+}
+
+function toggleAllGroups() {
+  const allOn = activeGroups.size === GROUPS.length + 1
+  if (allOn) {
+    activeGroups.clear()
+  } else {
+    GROUPS.forEach(g => activeGroups.add(g.id))
+    activeGroups.add('FWC')
+  }
+  // Update button label
+  document.getElementById('filter-all-btn').textContent = activeGroups.size === GROUPS.length + 1 ? 'Clear All' : 'Select All'
+  // Update group button states
+  document.querySelectorAll('.filter-group-btn').forEach((btn, i) => {
+    const id = i < GROUPS.length ? GROUPS[i].id : 'FWC'
+    btn.classList.toggle('active', activeGroups.has(id))
+  })
+  updateFilterBtn()
 }
 
 function renderCountryList() {
