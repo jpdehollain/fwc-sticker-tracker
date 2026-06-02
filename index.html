@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="manifest" href="site.webmanifest">
 <title>FWC Sticker Album Tracker</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #0a0e1a;
@@ -455,22 +455,22 @@ let tpGive = [], tpGet = [], tpTab = 'give', listsTab = 'missing'
 // =============================================
 // INIT
 // =============================================
-window.addEventListener('DOMContentLoaded', async () => {
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  })
+sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
-  sb.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth event:', event, 'user:', session?.user?.id)
-    if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+sb.auth.onAuthStateChange((event, session) => {
+  console.log('Auth event:', event, 'user:', session?.user?.id)
+  if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+    setTimeout(async () => {
       await initUser(session)
-    } else if (event === 'SIGNED_OUT') {
-      showScreen('auth-screen')
-    }
-  })
+    }, 0)
+  } else if (event === 'SIGNED_OUT') {
+    showScreen('auth-screen')
+  }
 })
 
 async function initUser(session) {
