@@ -795,7 +795,7 @@ async function loadTrades() {
     card.innerHTML = `
       <div class="user-trade-header">
         <span class="user-trade-name">👤 ${profile.username}</span>
-        <span class="trade-count">${total} trade${total !== 1 ? 's' : ''}</span>
+        <span class="trade-count">${total} card${total !== 1 ? 's' : ''}</span>
       </div>
       <div class="trade-detail" id="trade-detail-${profile.id}">
         <div class="trade-col">
@@ -829,6 +829,10 @@ function chipHtml(section, num, type) {
 function toggleTradeDetail(uid) {
   const el = document.getElementById(`trade-detail-${uid}`)
   el.classList.toggle('open')
+}
+
+function toggleChip(el, type, profileId) {
+  el.classList.toggle('deselected')
 }
 
 async function executeTradeSelected(recipientId, recipientName) {
