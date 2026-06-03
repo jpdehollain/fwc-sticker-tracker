@@ -131,6 +131,8 @@
   .chip { font-size: .75rem; padding: 4px 8px; border-radius: 6px; font-weight: 600; }
   .chip-give { background: rgba(231,76,60,.2); color: var(--red); border: 1px solid rgba(231,76,60,.4); }
   .chip-get { background: rgba(46,204,113,.2); color: var(--green); border: 1px solid rgba(46,204,113,.4); }
+  .selectable-chip { cursor: pointer; transition: opacity .15s, transform .15s; user-select: none; }
+  .selectable-chip.deselected { opacity: 0.3; text-decoration: line-through; }
   .trade-actions { display: flex; gap: 8px; margin-top: 12px; }
 
   /* LISTS */
@@ -798,14 +800,18 @@ async function loadTrades() {
       <div class="trade-detail" id="trade-detail-${profile.id}">
         <div class="trade-col">
           <h4>You give → ${profile.username}</h4>
-          <div class="sticker-chips">${iGive.map(([s,n]) => chipHtml(s,n,'give')).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}</div>
+          <div class="sticker-chips" id="give-chips-${profile.id}">
+            ${iGive.map(([s,n]) => `<span class="chip chip-give selectable-chip" data-section="${s}" data-num="${n}" onclick="toggleChip(this,'give','${profile.id}')">${s === 'FWC' ? `FWC-${n}` : `${TEAM_MAP[s]?.flag}${s}-${n}`}</span>`).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}
+          </div>
         </div>
         <div class="trade-col">
           <h4>${profile.username} gives → You</h4>
-          <div class="sticker-chips">${iGet.map(([s,n]) => chipHtml(s,n,'get')).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}</div>
+          <div class="sticker-chips" id="get-chips-${profile.id}">
+            ${iGet.map(([s,n]) => `<span class="chip chip-get selectable-chip" data-section="${s}" data-num="${n}" onclick="toggleChip(this,'get','${profile.id}')">${s === 'FWC' ? `FWC-${n}` : `${TEAM_MAP[s]?.flag}${s}-${n}`}</span>`).join('') || '<span style="color:var(--muted);font-size:.8rem">None</span>'}
+          </div>
         </div>
         <div class="trade-actions">
-          ${iGive.length && iGet.length ? `<button class="btn btn-green btn-sm" onclick="executeTrade('${profile.id}','${profile.username}',${JSON.stringify(iGive)},${JSON.stringify(iGet)})">Execute Trade</button>` : ''}
+          <button class="btn btn-green btn-sm" onclick="executeTradeSelected('${profile.id}','${profile.username}')">Execute Trade</button>
           <button class="btn btn-secondary btn-sm" onclick="toggleTradeDetail('${profile.id}')">Close</button>
         </div>
       </div>
@@ -825,14 +831,32 @@ function toggleTradeDetail(uid) {
   el.classList.toggle('open')
 }
 
-async function executeTrade(recipientId, recipientName, iGive, iGet) {
-  if (!confirm(`Execute trade with ${recipientName}?\nYou give: ${iGive.length} sticker(s)\nYou receive: ${iGet.length} sticker(s)`)) return
+async function executeTradeSelected(recipientId, recipientName) {
+  // Collect only selected (non-deselected) chips
+  const giveChips = [...document.querySelectorAll(`#give-chips-${recipientId} .selectable-chip:not(.deselected)`)]
+  const getChips  = [...document.querySelectorAll(`#get-chips-${recipientId} .selectable-chip:not(.deselected)`)]
 
-  // Update my stickers
-  for (const [s, n] of iGive) await setCount(s, n, getCount(s, n) - 1)
+  if (!giveChips.length && !getChips.length) {
+    toast('No stickers selected'); return
+  }
+
+  const iGive = giveChips.map(el => [el.dataset.section, parseInt(el.dataset.num)])
+  const iGet  = getChips.map(el => [el.dataset.section, parseInt(el.dataset.num)])
+
+  const givingText  = iGive.map(([s,n]) => `${s}-${n}`).join(', ') || 'none'
+  const gettingText = iGet.map(([s,n])  => `${s}-${n}`).join(', ') || 'none'
+
+  const confirmed = confirm(
+    `This trade will:\n\n` +
+    `ADD to your collection: ${gettingText}\n\n` +
+    `REMOVE from your doubles: ${givingText}\n\n` +
+    `Tap OK if you have physically traded these cards with ${recipientName}.`
+  )
+  if (!confirmed) return
+
+  for (const [s, n] of iGive) await setCount(s, n, Math.max(0, getCount(s, n) - 1))
   for (const [s, n] of iGet)  await setCount(s, n, getCount(s, n) + 1)
 
-  // Create pending trade for recipient
   await sb.from('trades').insert({
     initiator_id: currentUser.id,
     recipient_id: recipientId,
@@ -841,7 +865,7 @@ async function executeTrade(recipientId, recipientName, iGive, iGet) {
     status: 'pending'
   })
 
-  toast('Trade recorded! Reloading...')
+  toast('Trade recorded!')
   setTimeout(() => loadTrades(), 800)
 }
 
