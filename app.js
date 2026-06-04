@@ -310,6 +310,7 @@ async function overlayAdjust(delta) {
   const cur = getCount(overlaySection, overlayNum)
   const next = Math.max(0, cur + delta)
   await setCount(overlaySection, overlayNum, next)
+  if (overlaySection === 'ARG' && overlayNum === 17 && cur === 0 && next === 1) showArgSplash() // Easter egg
   updateOverlayDisplay()
   const btn = document.getElementById(`nb-${overlaySection}-${overlayNum}`)
   if (btn) {
@@ -648,6 +649,31 @@ function getAllStickerKeys() {
   }))
   for (let n = 1; n <= FWC_COUNT; n++) keys.push(['FWC', n])
   return keys
+}
+
+function showArgSplash() {
+  const heart = [
+    ' 🇦🇷 🇦🇷   🇦🇷 🇦🇷 ',
+    '🇦🇷 🇦🇷 🇦🇷 🇦🇷 🇦🇷',
+    '🇦🇷 🇦🇷 🇦🇷 🇦🇷 🇦🇷',
+    ' 🇦🇷 🇦🇷 🇦🇷 🇦🇷 ',
+    '  🇦🇷 🇦🇷 🇦🇷  ',
+    '    🇦🇷 🇦🇷    ',
+    '      🇦🇷      ',
+  ]
+  document.getElementById('arg-heart').innerHTML = heart.map(r => `<div>${r}</div>`).join('')
+  const splash = document.getElementById('arg-splash')
+  splash.style.display = 'flex'
+  // Animate in
+  splash.style.opacity = '0'
+  splash.style.transition = 'opacity .4s'
+  requestAnimationFrame(() => requestAnimationFrame(() => splash.style.opacity = '1'))
+}
+
+function closeArgSplash() {
+  const splash = document.getElementById('arg-splash')
+  splash.style.opacity = '0'
+  setTimeout(() => splash.style.display = 'none', 400)
 }
 
 function toast(msg) {
