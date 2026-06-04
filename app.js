@@ -50,10 +50,19 @@ sb.auth.onAuthStateChange((event, session) => {
     setTimeout(async () => {
       await initUser(session)
     }, 0)
+  } else if (event === 'INITIAL_SESSION' && !session) {
+    showScreen('auth-screen')
   } else if (event === 'SIGNED_OUT') {
     showScreen('auth-screen')
   }
 })
+
+setTimeout(() => {
+  const btn = document.getElementById('loading-fallback-btn')
+  if (btn && document.getElementById('loading-screen').classList.contains('active')) {
+    btn.style.display = 'block'
+  }
+}, 5000)
 
 async function initUser(session) {
   currentUser = session.user
@@ -661,7 +670,7 @@ function showArgSplash() {
     '    🇦🇷 🇦🇷    ',
     '      🇦🇷      ',
   ]
-  document.getElementById('arg-heart').innerHTML = heart.map(r => `<div>${r}</div>`).join('')
+  document.getElementById('arg-heart').innerHTML = '<pre style="font-family:inherit;background:none;border:none;text-align:center;line-height:2rem">' + heart.join('\n') + '</pre>'
   const splash = document.getElementById('arg-splash')
   splash.style.display = 'flex'
   // Animate in
