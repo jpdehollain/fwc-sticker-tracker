@@ -384,7 +384,7 @@ async function loadTrades() {
     card.innerHTML = `
       <div class="user-trade-header">
         <span class="user-trade-name">👤 ${profile.username}</span>
-        <span class="trade-count">${total} card${total !== 1 ? 's' : ''}</span>
+        <span class="trade-count">Can give: ${iGive.length} | Can get: ${iGet.length}</span>
       </div>
       <div class="trade-detail" id="trade-detail-${profile.id}">
         <div class="trade-col">
@@ -547,7 +547,9 @@ function listsSetTab(tab) {
   document.getElementById('list-tab-missing').classList.toggle('active', tab==='missing')
   document.getElementById('list-tab-doubles').classList.toggle('active', tab==='doubles')
   document.getElementById('list-tab-all').classList.toggle('active', tab==='all')
-  renderLists()
+  document.getElementById('list-tab-stats').classList.toggle('active', tab==='stats')
+  if (tab === 'stats') renderStats()
+  else renderLists()
 }
 
 function renderLists() {
@@ -581,6 +583,89 @@ function renderLists() {
     })
   })
   if (!anyShown) el.innerHTML = '<div class="empty-state">Nothing to show here</div>'
+}
+
+function renderStats() {
+  const el = document.getElementById('lists-content')
+  el.innerHTML = ''
+
+  const totalStickers = (GROUPS.length * 4 * COUNTRY_COUNT) + FWC_COUNT // 979
+  let collected = 0, doubles = 0, completeCountries = 0
+  const countriesProgress = []
+
+  const allSecs = [
+    ...GROUPS.flatMap(g => g.teams.map(([code, flag, name]) => ({ code, flag, name, max: COUNTRY_COUNT }))),
+    { code: 'FWC', flag: '🌍', name: 'FWC', max: FWC_COUNT }
+  ]
+
+  allSecs.forEach(({ code, flag, name, max }) => {
+    let secCollected = 0, secMissing = 0
+    for (let n = 1; n <= max; n++) {
+      const c = getCount(code, n)
+      if (c >= 1) secCollected++
+      if (c === 0) secMissing++
+      if (c >= 2) doubles += (c - 1)
+    }
+    collected += secCollected
+    if (secMissing === 0) completeCountries++
+    else countriesProgress.push({ flag, name, missing: secMissing, max, secCollected })
+  })
+
+  const missing = totalStickers - collected
+  const pct = Math.round((collected / totalStickers) * 100)
+  const missingPct = 100 - pct
+
+  // Packs to go: missing stickers minus doubles (tradeable), rounded up to nearest 7
+  const netMissing = Math.max(0, missing - doubles)
+  const packsToGo = Math.ceil(netMissing / 7)
+
+  // Top 5 almost complete (excluding complete countries)
+  const almostComplete = [...countriesProgress]
+    .sort((a, b) => a.missing - b.missing)
+    .slice(0, 5)
+
+  // Pie chart — conic gradient clockwise from top
+  // CSS conic-gradient starts at 3 o'clock, so rotate -90deg to start at 12
+  const collectedDeg = (collected / totalStickers) * 360
+  const pieHtml = `
+    <div class="stats-pie-row">
+      <div class="pie-chart">
+        <img class="pie-base" src="android-chrome-512x512.png" alt="">
+        <div class="pie-overlay" style="background: conic-gradient(from -90deg, transparent 0deg ${collectedDeg}deg, rgba(10,14,26,0.82) ${collectedDeg}deg 360deg)"></div>
+      </div>
+      <div class="pie-legend">
+        <div class="pie-legend-item">
+          <span class="pie-legend-dot" style="background:var(--green)"></span>
+          <strong>Collected:</strong> ${collected} (${pct}%)
+        </div>
+        <div class="pie-legend-item">
+          <span class="pie-legend-dot" style="background:var(--muted)"></span>
+          <strong>Missing:</strong> ${missing} (${missingPct}%)
+        </div>
+      </div>
+    </div>
+  `
+
+  const statsHtml = `
+    <div class="stats-list">
+      <div class="stat-row"><span class="stat-label">Stickers in album</span><span class="stat-value" style="color:var(--green)">${collected}</span></div>
+      <div class="stat-row"><span class="stat-label">Missing</span><span class="stat-value" style="color:var(--red)">${missing}</span></div>
+      <div class="stat-row"><span class="stat-label">Stickers to trade</span><span class="stat-value" style="color:var(--accent)">${doubles}</span></div>
+      <div class="stat-row"><span class="stat-label">Packs to go</span><span class="stat-value">${packsToGo}</span></div>
+      <div class="stat-row"><span class="stat-label">Complete countries</span><span class="stat-value">${completeCountries} / ${allSecs.length}</span></div>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:20px 0 8px;border-bottom:1px solid var(--border)">Almost Complete</div>
+    <div class="stats-list">
+      ${almostComplete.map(({ flag, name, missing, max, secCollected }) => `
+        <div class="stat-row">
+          <span class="stat-label">${flag} ${name}</span>
+          <span class="stat-value" style="color:var(--accent)">${secCollected}/${max}</span>
+        </div>
+      `).join('')}
+    </div>
+  `
+
+  el.innerHTML = pieHtml + statsHtml
 }
 
 // =============================================
