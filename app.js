@@ -373,7 +373,11 @@ async function loadTrades() {
     const iGive = myDoubles.filter(([s,n]) => getTheirCount(s,n) === 0)  // I have doubles, they're missing
     const iGet  = myMissing.filter(([s,n]) => getTheirCount(s,n) >= 2)    // I'm missing, they have doubles
     return { profile, iGive, iGet, total: iGive.length + iGet.length }
-  }).filter(t => t.total > 0).sort((a, b) => b.total - a.total)
+  }).filter(t => {
+    const theirMap = userMaps[t.profile.id] || {}
+    const theirTotal = Object.values(theirMap).reduce((sum, c) => sum + c, 0)
+    return t.total > 0 && theirTotal > 0
+  }).sort((a, b) => b.total - a.total)
 
   if (!trades.length) { el.innerHTML = '<div class="empty-state">No trades available with current users</div>'; return }
 
@@ -539,6 +543,7 @@ async function loadLists() {
   document.getElementById('list-tab-missing').classList.add('active')
   document.getElementById('list-tab-doubles').classList.remove('active')
   document.getElementById('list-tab-all').classList.remove('active')
+  document.getElementById('list-tab-stats').classList.remove('active')
   renderLists()
 }
 
@@ -623,7 +628,10 @@ function renderStats() {
   const almostComplete = [...countriesProgress]
     .sort((a, b) => a.missing - b.missing)
     .slice(0, 5)
-
+  // Top 5 with least collected
+  const needAttention = [...countriesProgress]
+    .sort((a, b) => a.secCollected - b.secCollected)
+    .slice(0, 5)
   // Pie chart — conic gradient clockwise from top
   // CSS conic-gradient starts at 3 o'clock, so rotate -90deg to start at 12
   const collectedDeg = (collected / totalStickers) * 360
@@ -648,8 +656,6 @@ function renderStats() {
 
   const statsHtml = `
     <div class="stats-list">
-      <div class="stat-row"><span class="stat-label">Stickers in album</span><span class="stat-value" style="color:var(--green)">${collected}</span></div>
-      <div class="stat-row"><span class="stat-label">Missing</span><span class="stat-value" style="color:var(--red)">${missing}</span></div>
       <div class="stat-row"><span class="stat-label">Stickers to trade</span><span class="stat-value" style="color:var(--accent)">${doubles}</span></div>
       <div class="stat-row"><span class="stat-label">Packs to go</span><span class="stat-value">${packsToGo}</span></div>
       <div class="stat-row"><span class="stat-label">Complete countries</span><span class="stat-value">${completeCountries} / ${allSecs.length}</span></div>
@@ -660,6 +666,15 @@ function renderStats() {
         <div class="stat-row">
           <span class="stat-label">${flag} ${name}</span>
           <span class="stat-value" style="color:var(--accent)">${secCollected}/${max}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:20px 0 8px;border-bottom:1px solid var(--border)">Needs most</div>
+    <div class="stats-list">
+      ${needAttention.map(({ flag, name, missing, max, secCollected }) => `
+        <div class="stat-row">
+          <span class="stat-label">${flag} ${name}</span>
+          <span class="stat-value" style="color:var(--red)">${secCollected}/${max}</span>
         </div>
       `).join('')}
     </div>
