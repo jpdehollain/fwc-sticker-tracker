@@ -560,34 +560,73 @@ function listsSetTab(tab) {
 function renderLists() {
   const el = document.getElementById('lists-content')
   el.innerHTML = ''
+
   const sections = [
     ...GROUPS.flatMap(g => g.teams.map(([code, flag, name]) => ({ code, flag, name, max: COUNTRY_COUNT }))),
     { code: 'FWC', flag: '🌍', name: 'FWC', max: FWC_COUNT }
   ]
+
+  if (listsTab === 'all') {
+    // Chip-based display for All tab
+    let anyShown = false
+    sections.forEach(({ code, flag, name, max }) => {
+      const stickers = []
+      for (let n = 1; n <= max; n++) {
+        const c = getCount(code, n)
+        stickers.push({ n, c })
+      }
+      anyShown = true
+      const row = document.createElement('div')
+      row.className = 'lists-country-row'
+      row.innerHTML = `<div class="lists-country-label">${flag} ${name}</div><div class="lists-chips" id="chips-${code}"></div>`
+      el.appendChild(row)
+      const chipsEl = row.querySelector(`#chips-${code}`)
+      stickers.forEach(({ n, c }) => {
+        const chip = document.createElement('span')
+        chip.className = `chip ${c === 0 ? 'chip-missing' : c === 1 ? 'chip-collected' : 'chip-doubles'}`
+        chip.textContent = `${code}-${n}`
+        chipsEl.appendChild(chip)
+      })
+    })
+    if (!anyShown) el.innerHTML = '<div class="empty-state">Nothing to show here</div>'
+    return
+  }
+
+  // Condensed layout for Missing and Doubles tabs
+  const shareLines = []
   let anyShown = false
+
   sections.forEach(({ code, flag, name, max }) => {
-    const stickers = []
+    const nums = []
     for (let n = 1; n <= max; n++) {
       const c = getCount(code, n)
-      if (listsTab === 'missing' && c > 0) continue
-      if (listsTab === 'doubles' && c < 2) continue
-      stickers.push({ n, c })
+      if (listsTab === 'missing' && c === 0) nums.push(n)
+      if (listsTab === 'doubles' && c >= 2) nums.push(n)
     }
-    if (!stickers.length) return
+    if (!nums.length) return
     anyShown = true
+    shareLines.push(`${flag} ${code}: ${nums.join(', ')}`)
+
     const row = document.createElement('div')
     row.className = 'lists-country-row'
-    row.innerHTML = `<div class="lists-country-label">${flag} ${name}</div><div class="lists-chips" id="chips-${code}"></div>`
+    row.innerHTML = `
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <span style="font-size:.8rem;font-weight:700;color:var(--muted);white-space:nowrap">${flag} ${code}</span>
+        <span style="font-size:.85rem;color:var(--text);line-height:1.6">${nums.join(', ')}</span>
+      </div>
+    `
     el.appendChild(row)
-    const chipsEl = row.querySelector(`#chips-${code}`)
-    stickers.forEach(({ n, c }) => {
-      const chip = document.createElement('span')
-      chip.className = `chip ${listsTab === 'all' ? (c === 0 ? 'chip-missing' : c === 1 ? 'chip-collected' : 'chip-doubles') : listsTab === 'missing' ? 'chip-missing' : 'chip-doubles'}`
-      chip.textContent = `${code}-${n}`
-      chipsEl.appendChild(chip)
-    })
   })
-  if (!anyShown) el.innerHTML = '<div class="empty-state">Nothing to show here</div>'
+
+  if (!anyShown) { el.innerHTML = '<div class="empty-state">Nothing to show here</div>'; return }
+
+  // Share button at top
+  const shareBtn = document.createElement('button')
+  shareBtn.className = 'btn btn-secondary btn-sm'
+  shareBtn.style.cssText = 'margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px;width:100%'
+  shareBtn.innerHTML = '📤 Share list'
+  shareBtn.onclick = () => shareList(shareLines, listsTab)
+  el.insertBefore(shareBtn, el.firstChild)
 }
 
 function renderStats() {
@@ -681,6 +720,26 @@ function renderStats() {
   `
 
   el.innerHTML = pieHtml + statsHtml
+}
+
+async function shareList(lines, tab) {
+  const title = tab === 'missing' ? 'My Missing Stickers' : 'My Doubles / Stickers to Trade'
+  const text = `WC 2026 Sticker Album — ${title}\n\n${lines.join('\n')}`
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text })
+    } catch(e) {
+      if (e.name !== 'AbortError') toast('Share failed')
+    }
+  } else {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text)
+      toast('Copied to clipboard!')
+    } catch(e) {
+      toast('Could not share or copy')
+    }
+  }
 }
 
 // =============================================
